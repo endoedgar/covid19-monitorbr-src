@@ -10,7 +10,7 @@ import { StorageModule } from "src/store/storage.module";
 import { StoreDevtoolsModule } from "@ngrx/store-devtools";
 import { environment } from "../environments/environment";
 import { HttpClientModule } from "@angular/common/http";
-import { ChartsModule } from "ng2-charts";
+import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 
 @NgModule({
   declarations: [AppComponent],
@@ -25,7 +25,7 @@ import { ChartsModule } from "ng2-charts";
       maxAge: 25,
       logOnly: environment.production
     }),
-    ChartsModule
+    LeafletModule.forRoot()
   ],
   providers: [],
   bootstrap: [AppComponent]

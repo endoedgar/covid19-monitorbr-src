@@ -1,5 +1,18 @@
-<div class="map-container">
-  <div class="map-frame">
-    <div id="map"></div>
-  </div>
+<div id="map" class="map-container" leaflet [leafletOptions]="options">
+</div>
+<leaflet-sidebar-control
+    [map]="map"
+    [options]="sidebarOptions"
+></leaflet-sidebar-control>
+
+<div id="sidebar" class="leaflet-sidebar collapsed">
+    <!-- Nav tabs -->
+    <div class="leaflet-sidebar-tabs">
+        ...
+    </div>
+
+    <!-- Tab panes -->
+    <div class="leaflet-sidebar-content">
+        ...
+    </div>
 </div>

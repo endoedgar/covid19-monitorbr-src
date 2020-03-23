@@ -23,6 +23,8 @@ import { TimeSeries } from 'src/models/TimeSeries';
 import { TimeSeriesEffects } from 'src/store/effects/timeseries.effects';
 import { PopupCityChartComponent } from './popup-city-chart/popup-city-chart.component';
 import { createCustomElement } from "@angular/elements";
+import { LeafletModule } from '@asymmetrik/ngx-leaflet';
+import { NgxSidebarControlModule } from '@runette/ngx-leaflet-sidebar';
 
 @NgModule({
   declarations: [
@@ -49,7 +51,16 @@ import { createCustomElement } from "@angular/elements";
     MatDialogModule,
     MatSortModule,
     MatFormFieldModule,
-    MatInputModule
-  ]
+    MatInputModule,
+    LeafletModule,
+    NgxSidebarControlModule
+    
+  ],
+  entryComponents: [PopupCityChartComponent],
 })
-export class CitiesModule {}
+export class CitiesModule {
+  constructor(injector: Injector) {
+    const PopupElement = createCustomElement(PopupCityChartComponent, {injector});
+    customElements.define('app-popup-city-chart-element', PopupElement);
+  }
+}

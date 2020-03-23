@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, OnInit, Injector, ComponentFactoryResolver } from "@angular/core";
+import {
+  AfterViewInit,
+  Component,
+  OnInit,
+  Injector,
+  ComponentFactoryResolver
+} from "@angular/core";
 import * as L from "leaflet";
 import { NgElement, WithProperties } from "@angular/elements";
 import { HttpClient } from "@angular/common/http";
@@ -19,6 +25,25 @@ import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { map, pairwise, scan } from "rxjs/operators";
 import { Content } from "@angular/compiler/src/render3/r3_ast";
 import { PopupCityChartComponent } from "../popup-city-chart/popup-city-chart.component";
+import Chart from 'chart.js';
+
+function getColor(d) {
+  return d > 1000
+    ? "#800026"
+    : d > 500
+    ? "#BD0026"
+    : d > 200
+    ? "#E31A1C"
+    : d > 100
+    ? "#FC4E2A"
+    : d > 50
+    ? "#FD8D3C"
+    : d > 20
+    ? "#FEB24C"
+    : d > 10
+    ? "#FED976"
+    : "#FFEDA0";
+}
 
 @Component({
   selector: "app-map",
@@ -33,6 +58,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   subscriptions$: Subscription[];
   hightlightSelect;
   debug;
+  options = {
+    layers: [
+      tileLayer()
+    ]
+  }
 
   getCitiesWithLatestCases$ = combineLatest(
     this.store.select(selectAllCities$),
@@ -43,7 +73,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         .map(city => {
           const timeseries = allTimeSeries.filter(
             timeserie => timeserie.city_cod == city.codigo_ibge
-          );
+          ).sort((a:any,b:any) => {
+            a = Date.parse(a.date)
+            b = Date.parse(b.date);
+            if(!a)
+              return -1;
+            if(!b)
+              return 1;
+            return b-a;
+          });
 
           const totalCases = timeseries.reduce(
             (prev, curr) => prev + curr.cases,
@@ -62,8 +100,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   );
 
-  constructor(private http: HttpClient, private store: Store<AppState>, private componentFactoryResolver: ComponentFactoryResolver,
-    private injector: Injector) {}
+  constructor(
+    private http: HttpClient,
+    private store: Store<AppState>,
+    private componentFactoryResolver: ComponentFactoryResolver,
+    private injector: Injector
+  ) {}
 
   public getJSON(jsonURL): Observable<any> {
     return this.http.get(jsonURL);
@@ -74,12 +116,39 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.store.dispatch(GetTimeSeries());
   }
 
+  addLegenda() {
+    const legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function(map) {
+      const div = L.DomUtil.create("div", "info legend"),
+        grades = [0, 10, 20, 50, 100, 200, 500, 1000],
+        labels = [];
+
+      for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+          '<i style="background:' +
+          getColor(grades[i] + 1) +
+          '"></i> ' +
+          grades[i] +
+          (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
+      }
+
+      return div;
+    };
+
+    legend.addTo(this.map);
+  }
+
   ngAfterViewInit(): void {
     this.map = L.map("map", {
       center: [-13.5748266, -49.6352299],
       zoom: 4,
       preferCanvas: true
     });
+
+    this.addLegenda();
+
+
 
     const tiles = L.tileLayer(
       "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
@@ -121,7 +190,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       if (municipio == undefined) {
       } else {
         if (municipio?.timeseries.length) {
-          addProperties.color = "#e38b4f";
+          addProperties.color = getColor(municipio.totalCases);
           addProperties.fillOpacity = 0.8;
         }
         if (!self.debug) {
@@ -132,8 +201,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       return { ...a, ...addProperties, weight: 0 };
     }
 
-    function onEachFeature(feature, layer) {
-      const municipio = municipios[feature.properties.id];
+    async function clickFeature(event) {
+      const ibge = event.target.feature.properties.id;
+      const municipio = municipios[ibge];
+      const feature = event.target.feature;
+      const layer = event.target;
+
       let popupContent = `<h1>${feature.properties.name}</h1>
         Confirmados: <b>0</b>
         `;
@@ -142,7 +215,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         municipio.timeseries.unshift({ cases: 0, date: null });
         const ultimoCaso =
           municipio.timeseries[municipio.timeseries.length - 1];
-        console.log(municipio.timeseries);
+
         popupContent = `<h1>${feature.properties.name}</h1>
         Confirmados: <b>${municipio.totalCases}</b><br/>
         Última atualização: <b style="color: red">${ultimoCaso.date}</b>
@@ -168,37 +241,64 @@ export class MapComponent implements OnInit, AfterViewInit {
           )
           .subscribe(content => (popupContent += content));
         popupContent += "</table>";
+
+        popupContent = `<h1>${feature.properties.name}</h1>
+        Confirmados: <b>${municipio.totalCases}</b><br/>
+        <div style='margin-left:10px;'><canvas style='clear:both; 
+        position: relative;' id='chart${ibge}'></canvas>Última atualização: <b style="color: red">${ultimoCaso.date}</b></div>`;
       }
 
       if (feature.properties && feature.properties.popupContent) {
         popupContent += feature.properties.popupContent;
       }
 
+      await layer
+      .unbindPopup()
+      .bindPopup(popupContent, { autoPan: true, maxWidth: "auto" })
+      .openPopup();
+
+      const canvas = <HTMLCanvasElement>document.getElementById(`chart${ibge}`);
+      if(canvas) {
+      const ctx = canvas.getContext('2d');
+
+      const validDates = municipio.timeseries.filter(timeseries => Date.parse(timeseries.date)).map(timeseries => ({...timeseries, date: new Date(Date.parse(timeseries.date))}));
+      const data = validDates.map(timeseries =>
+        ({
+          x: timeseries.date,
+          y: timeseries.cases
+        })
+      )
+      console.log(data);
+      let myChart = new Chart(ctx, {
+        type: "line",
+        data: {datasets: [{
+          label: "Casos",
+          data
+        }]},
+        options: {
+          scales: {
+            xAxes: [{
+                type: 'time',
+                time: {
+                    displayFormats: {
+                        quarter: 'D MMM'
+                    }
+                }
+            }]
+        },
+          responsive: true
+        }
+      });
+    console.log(event);
+  }
+    }
+
+    function onEachFeature(feature, layer) {
       layer.on({
         mouseover: highlightFeature,
-        mouseout: resetHighlight
+        mouseout: resetHighlight,
+        click: clickFeature
       });
-
-      let createCustomPopup = (function() { 
-        const factory = this.componentFactoryResolver.resolveComponentFactory(PopupCityChartComponent);
-        const component = factory.create(this.injector);
-    
-        //Set the component inputs manually 
-        component.instance.municipio = municipio;
-        //component.instance.someinput2 = "example";
-    
-        //Subscribe to the components outputs manually (if any)        
-        //component.instance.someoutput.subscribe(() => console.log("output handler fired"));
-    
-        //Manually invoke change detection, automatic wont work, but this is Ok if the component doesn't change
-        component.changeDetectorRef.detectChanges();
-    
-        return component.location.nativeElement;
-    }).bind(self);
-
-      layer.bindPopup(createCustomPopup());
-
-      //layer.bindPopup(popupContent);
     }
 
     let geoJSON;
