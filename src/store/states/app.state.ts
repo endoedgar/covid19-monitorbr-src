@@ -2,6 +2,6 @@ import { CityState } from './city.state';
 import { TimeSeriesState } from './timeseries.state';
 
 export interface AppState {
-  city: CityState,
+  cities: CityState,
   timeseries: TimeSeriesState
 }

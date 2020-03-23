@@ -39,16 +39,9 @@ export class CitiesEffects {
   GetCities: Observable<any> = this.actions.pipe(
     ofType(GetCities),
     switchMap(_ => {
-      return forkJoin({
-        cities: this.cityService.getCities(),
-        latestData: this.timeSeriesService.getLatestData()
-      }).pipe(
-        map(({cities, latestData}) => {
-          const citiesWithLatestData = cities.map( 
-            city => ({...city, ...latestData[city.codigo_ibge] })
-            
-          );
-          return GetCitiesSuccess({ cities: citiesWithLatestData });
+      return this.cityService.getCitiesLeaf().pipe(
+        map((cities) => {
+          return GetCitiesSuccess({ cities });
         }),
         catchError(err => {
           return of(GetCitiesFailure({ err }));
@@ -61,8 +54,10 @@ export class CitiesEffects {
   showMessageOnFailures$: Observable<any> = this.actions.pipe(
     ofType(GetCitiesFailure),
     map(action => action.err),
-    switchMap(err =>
-      of(ShowMessage({ message: err.error.message || err.message }))
+    switchMap(err => {
+      console.error(err);
+      return of(ShowMessage({ message: err?.error?.message || err?.message }))
+    }
     )
   );
 }

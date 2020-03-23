@@ -6,6 +6,6 @@ import * as timeseries from "./reducers/timeseries.reducers";
 import { AppState } from './states/app.state';
 
 export const reducers : ActionReducerMap<AppState> = {
-    city: city.reducer,
+    cities: city.reducer,
     timeseries: timeseries.reducer
 };

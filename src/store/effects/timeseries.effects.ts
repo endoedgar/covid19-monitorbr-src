@@ -14,9 +14,9 @@ import {
 import { TimeSeriesService } from "../../services/timeseries.service";
 import { Observable, of, merge } from "rxjs";
 import {
-  GetTimeSeriesByCity,
-  GetTimeSeriesByCitySuccess,
-  GetTimeSeriesByCityFailure,
+  GetTimeSeries,
+  GetTimeSeriesSuccess,
+  GetTimeSeriesFailure,
 } from "../actions/timeseries.actions";
 import { ShowMessage } from "../actions/ui.actions";
 import { City } from "../../models/City";
@@ -31,14 +31,14 @@ export class TimeSeriesEffects {
 
   @Effect()
   GetTimeSeries: Observable<any> = this.actions.pipe(
-    ofType(GetTimeSeriesByCity),
+    ofType(GetTimeSeries),
     switchMap(action => {
-      return this.timeSeriesService.getTimeSeriesByCity(action.city).pipe(
+      return this.timeSeriesService.getCases().pipe(
         map(timeseries => {
-          return GetTimeSeriesByCitySuccess({ timeseries });
+          return GetTimeSeriesSuccess({ timeseries });
         }),
         catchError(err => {
-          return of(GetTimeSeriesByCityFailure({ err }));
+          return of(GetTimeSeriesFailure({ err }));
         })
       );
     })
@@ -47,7 +47,7 @@ export class TimeSeriesEffects {
   @Effect()
   showMessageOnFailures$: Observable<any> = this.actions.pipe(
     ofType(
-      GetTimeSeriesByCityFailure
+      GetTimeSeriesFailure
     ),
     map(action => action.err),
     switchMap(err =>

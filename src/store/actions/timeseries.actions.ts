@@ -2,23 +2,22 @@ import { createAction, props } from "@ngrx/store";
 import { City } from "../../models/City";
 import { TimeSeries } from "src/models/TimeSeries";
 
-export const GetTimeSeriesByCity = createAction(
-  "[TIMESERIES] GetTimeseriesByCity",
-  props<{ city: City }>()
+export const GetTimeSeries = createAction(
+  "[TIMESERIES] GetTimeseries"
 );
 
-export const GetTimeSeriesByCitySuccess = createAction(
-  "[TIMESERIES] GetTimeseriesByCity Success",
+export const GetTimeSeriesSuccess = createAction(
+  "[TIMESERIES] GetTimeseries Success",
   props<{ timeseries: TimeSeries[] }>()
 );
 
-export const GetTimeSeriesByCityFailure = createAction(
-  "[TIMESERIES] GetTimeseriesByCity Failure",
+export const GetTimeSeriesFailure = createAction(
+  "[TIMESERIES] GetTimeseries Failure",
   props<{ err: any }>()
 );
 
 export const CityActionTypes = {
-  GetTimeSeriesByCity,
-  GetTimeSeriesByCitySuccess,
-  GetTimeSeriesByCityFailure
+  GetTimeSeries,
+  GetTimeSeriesSuccess,
+  GetTimeSeriesFailure
 };

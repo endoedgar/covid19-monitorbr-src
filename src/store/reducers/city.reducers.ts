@@ -31,12 +31,13 @@ export const reducer = createReducer(
     selectedFacilityId: null,
     mapMode: MapModeEnum.NONE
   })),
-  on(GetCitiesSuccess, (state, action) => 
-    cityAdapter.setAll(action.cities, {
+  on(GetCitiesSuccess, (state, action) =>  {
+    return cityAdapter.setAll(action.cities, {
       ...state,
       error: null,
       loading: false
     })
+  }
   ),
   on(SelectCity, (state, action) => ({
     ...state,

@@ -1,9 +1,9 @@
 import { createReducer, on } from "@ngrx/store";
 
 import {
-  GetTimeSeriesByCity,
-  GetTimeSeriesByCityFailure,
-  GetTimeSeriesByCitySuccess,
+  GetTimeSeries,
+  GetTimeSeriesFailure,
+  GetTimeSeriesSuccess,
 } from "../actions/timeseries.actions";
 import {
   initialTimeSeriesState,
@@ -13,19 +13,19 @@ import {
 export const reducer = createReducer(
   initialTimeSeriesState,
   on(
-    GetTimeSeriesByCityFailure,
+    GetTimeSeriesFailure,
     (state, action) => ({
       ...state,
       error: action.err,
       loading: false
     })
   ),
-  on(GetTimeSeriesByCity, (state, action) => ({
+  on(GetTimeSeries, (state, action) => ({
     ...state,
     error: null,
     loading: true
   })),
-  on(GetTimeSeriesByCitySuccess, (state, action) => 
+  on(GetTimeSeriesSuccess, (state, action) => 
     timeSeriesAdapter.addAll(action.timeseries, {
       ...state,
       error: null,

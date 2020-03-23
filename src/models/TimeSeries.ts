@@ -1,7 +1,9 @@
 export class TimeSeries {
-  city?: string;
+  city_cod?: number;
+  state_cod: number;
+  count: number;
   date?: string;
-  confirmed?: number;
+  cases?: number;
   deaths?: number;
   recovered?: number;
 }

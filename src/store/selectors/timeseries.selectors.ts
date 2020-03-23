@@ -8,7 +8,7 @@ export const {
 
 export const selectTimeSeriesState$ = createFeatureSelector<TimeSeriesState>("timeseries");
 
-export const selectAllCities$ = createSelector(
+export const selectAllTimeSeries$ = createSelector(
     selectTimeSeriesState$,
     _selectAllTimeSeries
 );
