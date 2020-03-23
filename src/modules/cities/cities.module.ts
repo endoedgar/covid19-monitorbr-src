@@ -18,13 +18,12 @@ import {MatDialogModule} from '@angular/material/dialog';
 import {MatSortModule} from '@angular/material/sort';
 import {MatFormFieldModule } from '@angular/material/form-field';
 import {MatInputModule } from '@angular/material/input';
+import {MatSidenavModule } from '@angular/material/sidenav';
 import { MapComponent } from './map/map.component';
 import { TimeSeries } from 'src/models/TimeSeries';
 import { TimeSeriesEffects } from 'src/store/effects/timeseries.effects';
 import { PopupCityChartComponent } from './popup-city-chart/popup-city-chart.component';
 import { createCustomElement } from "@angular/elements";
-import { LeafletModule } from '@asymmetrik/ngx-leaflet';
-import { NgxSidebarControlModule } from '@runette/ngx-leaflet-sidebar';
 
 @NgModule({
   declarations: [
@@ -52,9 +51,7 @@ import { NgxSidebarControlModule } from '@runette/ngx-leaflet-sidebar';
     MatSortModule,
     MatFormFieldModule,
     MatInputModule,
-    LeafletModule,
-    NgxSidebarControlModule
-    
+    MatSidenavModule
   ],
   entryComponents: [PopupCityChartComponent],
 })

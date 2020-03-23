@@ -22,7 +22,6 @@
     "@angular/platform-browser": "~9.1.0-rc.0",
     "@angular/platform-browser-dynamic": "~9.1.0-rc.0",
     "@angular/router": "~9.1.0-rc.0",
-    "@asymmetrik/ngx-leaflet": "^6.0.1",
     "@ngrx/effects": "^9.0.0",
     "@ngrx/entity": "^9.0.0",
     "@ngrx/store": "^9.0.0",

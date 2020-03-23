@@ -23,26 +23,24 @@ import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
 import { TimeSeries } from "src/models/TimeSeries";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { map, pairwise, scan } from "rxjs/operators";
-import { Content } from "@angular/compiler/src/render3/r3_ast";
-import { PopupCityChartComponent } from "../popup-city-chart/popup-city-chart.component";
 import Chart from 'chart.js';
 
 function getColor(d) {
   return d > 1000
-    ? "#800026"
+    ? "#3f0012"
     : d > 500
-    ? "#BD0026"
+    ? "#5e0012"
     : d > 200
-    ? "#E31A1C"
+    ? "#710c0d"
     : d > 100
-    ? "#FC4E2A"
+    ? "#901a02"
     : d > 50
-    ? "#FD8D3C"
+    ? "#901a02"
     : d > 20
-    ? "#FEB24C"
+    ? "#a35e00"
     : d > 10
-    ? "#FED976"
-    : "#FFEDA0";
+    ? "#a35e00"
+    : "#cea700";
 }
 
 @Component({
@@ -58,11 +56,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   subscriptions$: Subscription[];
   hightlightSelect;
   debug;
-  options = {
-    layers: [
-      tileLayer()
-    ]
-  }
 
   getCitiesWithLatestCases$ = combineLatest(
     this.store.select(selectAllCities$),
@@ -116,8 +109,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.store.dispatch(GetTimeSeries());
   }
 
+  addSidebar() {
+  }
+
   addLegenda() {
-    const legend = L.control({ position: "bottomright" });
+    const legend = new L.Control({ position: "bottomright" });
 
     legend.onAdd = function(map) {
       const div = L.DomUtil.create("div", "info legend"),
@@ -147,8 +143,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     this.addLegenda();
-
-
+    this.addSidebar();
 
     const tiles = L.tileLayer(
       "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
@@ -184,7 +179,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       const a = feature.properties && feature.properties.style;
       let addProperties: any;
       addProperties = {
-        fillOpacity: 0
+        fillOpacity: 0,
+        weight: 0
       };
 
       if (municipio == undefined) {
@@ -192,13 +188,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         if (municipio?.timeseries.length) {
           addProperties.color = getColor(municipio.totalCases);
           addProperties.fillOpacity = 0.8;
+          addProperties.weight = 1;
+          addProperties.color = getColor(municipio.totalCases);
         }
         if (!self.debug) {
           self.debug = true;
           console.log(municipio, feature.properties.id);
         }
       }
-      return { ...a, ...addProperties, weight: 0 };
+      return { ...a, ...addProperties };
     }
 
     async function clickFeature(event) {

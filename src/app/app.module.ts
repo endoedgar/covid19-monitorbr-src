@@ -10,7 +10,6 @@ import { StorageModule } from "src/store/storage.module";
 import { StoreDevtoolsModule } from "@ngrx/store-devtools";
 import { environment } from "../environments/environment";
 import { HttpClientModule } from "@angular/common/http";
-import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 
 @NgModule({
   declarations: [AppComponent],
@@ -24,8 +23,7 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
     StoreDevtoolsModule.instrument({
       maxAge: 25,
       logOnly: environment.production
-    }),
-    LeafletModule.forRoot()
+    })
   ],
   providers: [],
   bootstrap: [AppComponent]
