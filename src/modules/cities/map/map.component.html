@@ -1,30 +1,40 @@
-<mat-drawer-container class="example-container" autosize>
-  <mat-drawer #drawer class="example-sidenav" position="end" mode="over">
+<mat-drawer-container class="container" autosize>
+  <mat-drawer #drawer class="sidenav" position="end" mode="over">
     <app-city-list></app-city-list>
   </mat-drawer>
-  <div class="example-sidenav-content">
-    <div class="map-container">
-      <div class="map-frame">
-        <div id="map">
-          <div class="leaflet-control-container">
-            <div class="leaflet-top leaflet-right">
-              <div class="leaflet-bar leaflet-control">
-                <a href="#" (click)="drawer.toggle()">
-                  L
-                </a>
+  <div class="sidenav-content">
+    <div id="map">
+      <div class="leaflet-control-container">
+        <div class="leaflet-top leaflet-right">
+          <div class="leaflet-bar leaflet-control">
+            <a href="#" (click)="drawer.toggle()">
+              <div
+                style="-webkit-transform: rotate(45deg); 
+               -moz-transform: rotate(45deg); 
+                 -o-transform: rotate(45deg);
+                    transform: rotate(45deg);"
+              >
+                &#9906;
               </div>
-            </div>
+            </a>
           </div>
-          <div class="leaflet-control-container">
-            <div class="leaflet-bottom leaflet-left">
-              <div class="leaflet-control info legend leaflet-control">
-                Monitor COVID-19 - Brasil<br/>
-                Confirmados: {{totalConfirmed}} Mortes: <b style="color: red">{{totalDeath}}</b><br/>
-                Última atualização: {{ ultimaAtualizacao$ | async | date }}<br/>
-                Fonte: <a href="https://github.com/turicas/covid19-br">Secretarias de Saúde<br/>das Unidades Federativas, dados<br/>tratados por Álvaro Justen/Brasil.IO</a><br/>
-                Desenvolvido por <a href="https://github.com/endoedgar">Edgar Endo Junior</a>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="leaflet-control-container">
+        <div class="leaflet-bottom leaflet-left">
+          <div class="leaflet-control info legend leaflet-control">
+            Monitor COVID-19 - Brasil<br />
+            Confirmados: {{ totalConfirmed }} Mortes:
+            <b style="color: red">{{ totalDeath }}</b
+            ><br />
+            Última atualização: {{ ultimaAtualizacao$ | async | date }}<br />
+            Fonte:
+            <a href="https://github.com/turicas/covid19-br"
+              >Secretarias de Saúde<br />das Unidades Federativas, dados<br />tratados
+              por Álvaro Justen/Brasil.IO</a
+            ><br />
+            Desenvolvido por
+            <a href="https://github.com/endoedgar">Edgar Endo Junior</a>
           </div>
         </div>
       </div>

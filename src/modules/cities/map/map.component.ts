@@ -60,9 +60,9 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   hightlightSelect;
   markersMunicipios: any[];
   municipios: any;
-  totalConfirmed : number;
+  totalConfirmed: number;
   totalDeath: number;
-  ultimaAtualizacao$ : Observable<Date>;
+  ultimaAtualizacao$: Observable<Date>;
   @ViewChild("drawer") public sidenav: MatSidenav;
 
   /*getCitiesWithLatestCasesFast$ = this.getJSON("assets/data/data.json");*/
@@ -72,7 +72,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
     private store: Store<AppState>,
     private componentFactoryResolver: ComponentFactoryResolver,
     private injector: Injector,
-    private timeSeriesService : TimeSeriesService
+    private timeSeriesService: TimeSeriesService
   ) {
     this.ultimaAtualizacao$ = timeSeriesService.getUltimaAtualizacao();
   }
@@ -134,7 +134,6 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   }
 
   ngAfterContentInit(): void {
-
     this.subscriptions$ = [
       // desenhar fronteiras do brasil
       this.getJSON("assets/data/brazil.json").subscribe(brasil => {
@@ -150,6 +149,10 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
       getCitiesWithLatestCases$(this.store).subscribe(municipios => {
         this.municipios = municipios;
         this.initMap();
+        // First we get the viewport height and we multiple it by 1% to get a value for a vh unit
+        let vh = window.innerHeight * 0.01;
+        // Then we set the value in the --vh custom property to the root of the document
+        document.documentElement.style.setProperty("--vh", `${vh}px`);
         //console.log(municipios);
       }),
       this.store.select(getCurrentCity$).subscribe(city => {
@@ -319,7 +322,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
               color: getColor(municipioAtual.confirmed),
               fillColor: getColor(municipioAtual.confirmed),
               weight: 0,
-              radius: Math.max(3.0, 50.0 * razao),
+              radius: Math.max(5, 50.0 * razao),
               fillOpacity: 0.9
             }
           )
@@ -339,7 +342,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
     });
 
     function dehighlightFeature(municipioAtual) {
-      return(e) => {
+      return e => {
         var layer = e.target;
 
         layer.setStyle({
@@ -357,8 +360,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
       var layer = e.target;
 
       layer.setStyle({
-        fillColor: "#777",
-        
+        fillColor: "#777"
       });
 
       if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
