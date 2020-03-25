@@ -7,7 +7,7 @@ export interface TimeSeriesState extends EntityState<TimeSeries> {
 }
 
 export const timeSeriesAdapter: EntityAdapter<TimeSeries> = createEntityAdapter<TimeSeries>({
-  selectId: instance => instance.city_cod + " " + instance.date
+  selectId: instance => instance.city_ibge_code + " " + instance.date
 });
 
 export const initialTimeSeriesState: TimeSeriesState = timeSeriesAdapter.getInitialState({

@@ -22,8 +22,19 @@ import { GetCities } from "src/store/actions/city.actions";
 import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
 import { TimeSeries } from "src/models/TimeSeries";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
-import { map, pairwise, scan } from "rxjs/operators";
-import Chart from 'chart.js';
+import { map, pairwise, scan, toArray } from "rxjs/operators";
+import Chart from "chart.js";
+
+var timer = function(name) {
+  var start = new Date();
+  return {
+    stop: function() {
+      var end = new Date();
+      var time = end.getTime() - start.getTime();
+      console.log("Timer:", name, "finished in", time, "ms");
+    }
+  };
+};
 
 function getColor(d) {
   return d > 1000
@@ -55,43 +66,44 @@ export class MapComponent implements OnInit, AfterViewInit {
   city: City;
   subscriptions$: Subscription[];
   hightlightSelect;
-  debug;
 
   getCitiesWithLatestCases$ = combineLatest(
     this.store.select(selectAllCities$),
     this.store.select(selectAllTimeSeries$),
     (cities: City[], allTimeSeries: TimeSeries[]) => {
-      console.log("ESTOU AQUI");
+      const t = timer("combineLatest");
       const retornar = cities
         .map(city => {
           const timeseries = allTimeSeries.filter(
-            timeserie => timeserie.city_cod == city.codigo_ibge
-          ).sort((a:any,b:any) => {
-            a = Date.parse(a.date)
-            b = Date.parse(b.date);
-            if(!a)
-              return -1;
-            if(!b)
-              return 1;
-            return b-a;
-          });
-
-          const totalCases = timeseries.reduce(
-            (prev, curr) => prev + curr.cases,
-            0
+            timeserie => timeserie.city_ibge_code == city.codigo_ibge
           );
+
+          const total = timeseries.reduce(
+            (prev, curr) => ({
+              totalCases: prev.totalCases + curr.confirmeddiff,
+              totalDeaths: prev.totalDeaths + curr.deathsdiff
+            }),
+            { totalCases: 0, totalDeaths: 0 }
+          );
+
           return {
             ...city,
-            totalCases,
+            totalCases: total.totalCases,
+            totalDeaths: total.totalDeaths,
             timeseries
           };
         })
         .reduce((prev, current) => {
           return { ...prev, [current.codigo_ibge]: current };
         }, {});
+      t.stop();
+
+      console.log(JSON.stringify(retornar));
       return retornar;
     }
   );
+
+  getCitiesWithLatestCasesFast$ = this.getJSON("assets/data/data.json");
 
   constructor(
     private http: HttpClient,
@@ -109,8 +121,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.store.dispatch(GetTimeSeries());
   }
 
-  addSidebar() {
-  }
+  addSidebar() {}
 
   addLegenda() {
     const legend = new L.Control({ position: "bottomright" });
@@ -156,6 +167,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     tiles.addTo(this.map);
 
+    // desenhar fronteiras do brasil
     this.getJSON("assets/data/brazil.json").subscribe(brasil => {
       L.geoJSON(brasil, {
         style: function(feature) {
@@ -165,7 +177,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }).addTo(this.map);
     });
 
-    this.getCitiesWithLatestCases$.subscribe(municipios => {
+    this.getCitiesWithLatestCasesFast$.subscribe(municipios => {
       this.initMap(municipios);
     });
   }
@@ -191,21 +203,12 @@ export class MapComponent implements OnInit, AfterViewInit {
           addProperties.weight = 1;
           addProperties.color = getColor(municipio.totalCases);
         }
-        if (!self.debug) {
-          self.debug = true;
-          console.log(municipio, feature.properties.id);
-        }
       }
       return { ...a, ...addProperties };
     }
 
-    async function clickFeature(event) {
-      const ibge = event.target.feature.properties.id;
-      const municipio = municipios[ibge];
-      const feature = event.target.feature;
-      const layer = event.target;
-
-      let popupContent = `<h1>${feature.properties.name}</h1>
+    async function click(layer, municipio, ibge) {
+      let popupContent = `<h1>${municipio.name}</h1>
         Confirmados: <b>0</b>
         `;
 
@@ -214,81 +217,134 @@ export class MapComponent implements OnInit, AfterViewInit {
         const ultimoCaso =
           municipio.timeseries[municipio.timeseries.length - 1];
 
-        popupContent = `<h1>${feature.properties.name}</h1>
+        popupContent = `<h1>${municipio.nome}</h1>
         Confirmados: <b>${municipio.totalCases}</b><br/>
         Última atualização: <b style="color: red">${ultimoCaso.date}</b>
         <table><tr><th>Data</th><th>Casos</th><th>Novos</th></tr>`;
 
-        from(municipio.timeseries)
-          .pipe(
-            scan(
-              (acc: any, curr: any) => {
-                return {
-                  cases: acc.cases + curr.cases,
-                  date: curr.date
-                };
-              },
-              { cases: 0, date: null }
-            ),
-            pairwise(),
-            map(pair => {
-              return `<tr><td>${pair[1].date}</td><td>${
-                pair[1].cases
-              }</td><td>${pair[1].cases - pair[0].cases}</td></tr>`;
-            })
-          )
-          .subscribe(content => (popupContent += content));
-        popupContent += "</table>";
-
-        popupContent = `<h1>${feature.properties.name}</h1>
+        popupContent = `<h1>${municipio.nome}</h1>
         Confirmados: <b>${municipio.totalCases}</b><br/>
+        Mortes: <b style='color: red;'>${municipio.totalDeaths}</b><br/>
         <div style='margin-left:10px;'><canvas style='clear:both; 
         position: relative;' id='chart${ibge}'></canvas>Última atualização: <b style="color: red">${ultimoCaso.date}</b></div>`;
       }
 
-      if (feature.properties && feature.properties.popupContent) {
-        popupContent += feature.properties.popupContent;
-      }
-
       await layer
-      .unbindPopup()
-      .bindPopup(popupContent, { autoPan: true, maxWidth: "auto" })
-      .openPopup();
+        .unbindPopup()
+        .bindPopup(popupContent, { autoPan: true, maxWidth: "auto" })
+        .openPopup();
 
       const canvas = <HTMLCanvasElement>document.getElementById(`chart${ibge}`);
-      if(canvas) {
-      const ctx = canvas.getContext('2d');
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
 
-      const validDates = municipio.timeseries.filter(timeseries => Date.parse(timeseries.date)).map(timeseries => ({...timeseries, date: new Date(Date.parse(timeseries.date))}));
-      const data = validDates.map(timeseries =>
-        ({
-          x: timeseries.date,
-          y: timeseries.cases
-        })
-      )
-      console.log(data);
-      let myChart = new Chart(ctx, {
-        type: "line",
-        data: {datasets: [{
-          label: "Casos",
-          data
-        }]},
-        options: {
-          scales: {
-            xAxes: [{
-                type: 'time',
-                time: {
-                    displayFormats: {
-                        quarter: 'D MMM'
+        const validDates = municipio.timeseries
+          .filter(timeseries => Date.parse(timeseries.date))
+          .map(timeseries => ({
+            ...timeseries,
+            date: new Date(Date.parse(timeseries.date))
+          }));
+
+        const dias = validDates
+          .filter(
+            timeseries =>
+              timeseries.confirmeddiff > 0 || timeseries.deathsdiff > 0
+          )
+          .map(timeseries => ({
+            x: timeseries.date,
+            confirmeddiff: timeseries.confirmeddiff,
+            deathsdiff: timeseries.deathsdiff
+          }));
+
+        type dia_data = {
+          x: Date;
+          confirmeddiff: number;
+          deathsdiff: number;
+          confirmedsum: number;
+          deathssum: number;
+        };
+        from(dias)
+          .pipe(
+            scan(
+              (acc: dia_data, value: dia_data) => {
+                return {
+                  x: value.x,
+                  confirmeddiff: value.confirmeddiff,
+                  deathsdiff: value.deathsdiff,
+                  confirmedsum: acc.confirmedsum + value.confirmeddiff,
+                  deathssum: acc.deathssum + value.deathsdiff
+                };
+              },
+              {
+                x: null,
+                confirmeddiff: 0,
+                deathsdiff: 0,
+                confirmedsum: 0,
+                deathssum: 0
+              }
+            ),
+            toArray()
+          )
+          .subscribe(dadosGerais => {
+            const confirmed = [];
+            const confirmedSum = [];
+            const deaths = [];
+            const deathsSum = [];
+
+            dadosGerais.forEach(dadoGeral => {
+              function s(dados) {
+                return { x: dadoGeral.x, y: dados };
+              }
+
+              confirmed.push(s(dadoGeral.confirmeddiff));
+              confirmedSum.push(s(dadoGeral.confirmedsum));
+              deaths.push(s(dadoGeral.deathsdiff));
+              deathsSum.push(s(dadoGeral.deathssum));
+            });
+
+            console.log(confirmed);
+
+            let myChart = new Chart(ctx, {
+              type: "line",
+              data: {
+                datasets: [
+                  {
+                    label: "Confirmados",
+                    data: confirmedSum
+                  },
+                  {
+                    label: "Mortes",
+                    data: deathsSum,
+                    backgroundColor: "#FF9999"
+                  }
+                ]
+              },
+              options: {
+                scales: {
+                  xAxes: [
+                    {
+                      type: "time",
+                      time: {
+                        displayFormats: {
+                          quarter: "D MMM"
+                        }
+                      }
                     }
-                }
-            }]
-        },
-          responsive: true
-        }
-      });
-    console.log(event);
-  }
+                  ]
+                },
+                responsive: true
+              }
+            });
+          });
+      }
+    }
+
+    async function clickFeature(event) {
+      const ibge = event.target.feature.properties.id;
+      const municipio = municipios[ibge];
+      const layer = event.target;
+
+      click(layer, municipio, ibge)
     }
 
     function onEachFeature(feature, layer) {
@@ -300,12 +356,43 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 
     let geoJSON;
-    this.getJSON("assets/data/geojs-100-mun.json").subscribe(municipiosJSON => {
+
+    /*this.getJSON("assets/data/geojs-100-mun.json").subscribe(municipiosJSON => {
+
       geoJSON = L.geoJSON(municipiosJSON, {
         style: style,
 
         onEachFeature: onEachFeature
       }).addTo(this.map);
+    });*/
+
+    this.getJSON("assets/data/municipios.json").subscribe(municipiosJSON => {
+      const maiorCaso = parseFloat(
+        Object.keys(municipios).reduce(
+          (prev, curr) =>
+            prev < municipios[curr].totalCases
+              ? municipios[curr].totalCases
+              : prev,
+          0
+        )
+      );
+
+      municipiosJSON.forEach(municipio => {
+        const municipioAtual = municipios[municipio.codigo_ibge];
+        if (typeof municipioAtual != "undefined") {
+          if (municipioAtual.totalCases > 0) {
+            const razao = (municipioAtual.totalCases / maiorCaso)
+            console.log(municipioAtual, razao);
+            L.circle([municipio.latitude, municipio.longitude], {
+              color: getColor(municipioAtual.totalCases),
+              radius: Math.max(
+                50.0,
+                300000.0 * razao
+              )
+            }).addTo(this.map).on("click", (e) => { console.log(e); click(e.target, municipioAtual, municipioAtual.codigo_ibge) });
+          }
+        }
+      });
     });
 
     function highlightFeature(e) {

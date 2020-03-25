@@ -32,6 +32,7 @@
     "document-register-element": "^1.7.2",
     "esri": "0.0.1-security",
     "esri-loader": "^2.13.0",
+    "geojson-vt": "^3.2.1",
     "leaflet": "^1.6.0",
     "ng2-charts": "^2.3.0",
     "rxjs": "~6.5.4",

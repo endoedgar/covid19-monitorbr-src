@@ -11,6 +11,8 @@
   "dependencies": {
     "moment": "^2.24.0",
     "mongodb": "^3.5.5",
-    "node": "^13.10.1"
+    "node": "^13.10.1",
+    "node-fetch": "^2.6.0",
+    "rxjs": "^6.5.4"
   }
 }

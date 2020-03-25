@@ -1,9 +1,7 @@
 export class TimeSeries {
-  city_cod?: number;
-  state_cod: number;
-  count: number;
+  city_ibge_code?: number;
   date?: string;
-  cases?: number;
-  deaths?: number;
-  recovered?: number;
+  confirmeddiff?: number;
+  deathsdiff?: number;
+  is_last: boolean
 }
