@@ -4,36 +4,23 @@ import {
   Observable,
   of,
   from,
-  merge,
-  defer,
-  Subject,
   BehaviorSubject
 } from "rxjs";
-import { fromFetch } from "rxjs/fetch";
-
 import { environment } from "../environments/environment";
-//import timeseriesJson from "../assets/data/timeseries.json";
 import {
   switchMap,
   map,
   toArray,
-  filter,
-  reduce,
   groupBy,
   mergeMap,
   startWith,
   scan,
   pairwise,
   flatMap,
-  takeUntil,
   expand,
-  mapTo,
   tap,
-  takeWhile,
   delay
 } from "rxjs/operators";
-import { City } from "src/models/City";
-//import brazilCases from "src/assets/data/brazil-cases.json";
 
 @Injectable({ providedIn: "root" })
 export class TimeSeriesService {
@@ -109,7 +96,7 @@ export class TimeSeriesService {
   }
 
   public getCases(): Observable<any> {
-    const obs$ = this.pegar("https://brasil.io/api/dataset/covid19");
+    const obs$ = this.pegar(environment.apiUrl);
 
     return obs$;
   }

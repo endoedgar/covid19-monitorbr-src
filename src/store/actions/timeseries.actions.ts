@@ -1,5 +1,4 @@
 import { createAction, props } from "@ngrx/store";
-import { City } from "../../models/City";
 import { TimeSeries } from "src/models/TimeSeries";
 
 export const GetTimeSeries = createAction(
@@ -16,7 +15,7 @@ export const GetTimeSeriesFailure = createAction(
   props<{ err: any }>()
 );
 
-export const CityActionTypes = {
+export const TimeSeriesActionTypes = {
   GetTimeSeries,
   GetTimeSeriesSuccess,
   GetTimeSeriesFailure

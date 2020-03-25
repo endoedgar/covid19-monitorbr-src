@@ -1,15 +1,15 @@
 import { LatLngExpression } from 'leaflet';
 
-export enum CityTipoEnum {
+export enum RegionTipoEnum {
     CIDADE,
     ESTADO
 }
 
-export interface City {
+export interface Region {
     codigo_ibge: number;
     nome: string;
 
-    tipo: CityTipoEnum;
+    tipo: RegionTipoEnum;
     representacao : {latitude: number;
         longitude: number;} | LatLngExpression[][];
 

@@ -1,4 +1,4 @@
-import { City } from "../../models/City";
+import { Region } from "../../models/Region";
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
 
 export enum MapModeEnum {
@@ -11,20 +11,20 @@ export const MapModeEnum2LabelMapping: Record<MapModeEnum, string> = {
   [MapModeEnum.SELECT_STATE]: "Estadual"
 };
 
-export interface CityState extends EntityState<City> {
+export interface RegionState extends EntityState<Region> {
   loading : boolean;
   error : any;
-  selectedCityId : number;
+  selectedRegionId : number;
   mapMode : MapModeEnum;
 }
 
-export const cityAdapter: EntityAdapter<City> = createEntityAdapter<City>({
+export const regionAdapter: EntityAdapter<Region> = createEntityAdapter<Region>({
   selectId: instance => instance.codigo_ibge
 });
 
-export const initialCityState: CityState = cityAdapter.getInitialState({
+export const initialRegionState: RegionState = regionAdapter.getInitialState({
   loading: false,
   error: null,
-  selectedCityId: null,
+  selectedRegionId: null,
   mapMode: MapModeEnum.SELECT_CITY
 });

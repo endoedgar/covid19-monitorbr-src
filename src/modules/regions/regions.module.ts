@@ -1,4 +1,4 @@
-import { NgModule, Injector } from "@angular/core";
+import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
@@ -6,8 +6,8 @@ import { StoreModule } from "@ngrx/store";
 import { reducers } from 'src/store';
 import { EffectsModule } from "@ngrx/effects";
 import { BodyReduxComponent } from "./body/body.component";
-import { CitiesEffects } from 'src/store/effects/city.effects'
-import { CityListComponent } from './city-list/city-list.component';
+import { RegionsEffects } from 'src/store/effects/region.effects'
+import { RegionListComponent } from './region-list/region-list.component';
 
 import {MatCardModule} from '@angular/material/card';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
@@ -21,21 +21,18 @@ import {MatSidenavModule } from '@angular/material/sidenav';
 import {MatSelectModule } from '@angular/material/select';
 import { MapComponent } from './map/map.component';
 import { TimeSeriesEffects } from 'src/store/effects/timeseries.effects';
-import { PopupCityChartComponent } from './popup-city-chart/popup-city-chart.component';
-import { createCustomElement } from "@angular/elements";
 
 @NgModule({
   declarations: [
     BodyReduxComponent,
-    CityListComponent,
-    MapComponent,
-    PopupCityChartComponent
+    RegionListComponent,
+    MapComponent
   ],
   imports: [
     CommonModule,
-    StoreModule.forFeature("cities", reducers.cities),
+    StoreModule.forFeature("regions", reducers.regions),
     StoreModule.forFeature("timeseries", reducers.timeseries),
-    EffectsModule.forFeature([CitiesEffects, TimeSeriesEffects]),
+    EffectsModule.forFeature([RegionsEffects, TimeSeriesEffects]),
     RouterModule.forChild([{ path: "", component: BodyReduxComponent }]),
     FormsModule,
     ReactiveFormsModule,
@@ -52,11 +49,8 @@ import { createCustomElement } from "@angular/elements";
     MatSidenavModule,
     MatSelectModule
   ],
-  entryComponents: [PopupCityChartComponent],
+  entryComponents: [],
 })
-export class CitiesModule {
-  constructor(injector: Injector) {
-    const PopupElement = createCustomElement(PopupCityChartComponent, {injector});
-    customElements.define('app-popup-city-chart-element', PopupElement);
-  }
+export class RegionsModule {
+  constructor() {}
 }

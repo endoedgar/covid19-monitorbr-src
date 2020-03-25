@@ -4,23 +4,16 @@ import {
   map,
   switchMap,
   catchError,
-  tap,
-  concatMapTo,
-  mergeMap,
-  filter,
-  pairwise
 } from "rxjs/operators";
 
 import { TimeSeriesService } from "../../services/timeseries.service";
-import { Observable, of, merge } from "rxjs";
+import { Observable, of } from "rxjs";
 import {
   GetTimeSeries,
   GetTimeSeriesSuccess,
   GetTimeSeriesFailure,
 } from "../actions/timeseries.actions";
 import { ShowMessage } from "../actions/ui.actions";
-import { City } from "../../models/City";
-import { TimeSeries } from 'src/models/TimeSeries';
 
 @Injectable()
 export class TimeSeriesEffects {

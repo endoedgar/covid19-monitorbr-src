@@ -1,4 +1,5 @@
-# Covid19brasilmap
+# COVID-19 Monitor BR
+## Created by Edgar Endo Junior
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.0.5.
 

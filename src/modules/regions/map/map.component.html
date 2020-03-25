@@ -1,13 +1,17 @@
 <mat-drawer-container class="container" autosize>
   <mat-drawer #drawer class="sidenav" position="end" mode="over">
-    <app-city-list></app-city-list>
+    <app-region-list></app-region-list>
   </mat-drawer>
   <div class="sidenav-content">
     <div id="map">
       <div class="middle">
         <mat-form-field>
           <mat-label>Mapa</mat-label>
-          <mat-select [(value)]="selected" (selectionChange)="mudancaDeModo($event)" value="">
+          <mat-select
+            [(value)]="selected"
+            (selectionChange)="mudancaDeModo($event)"
+            value=""
+          >
             <mat-option value="SELECT_CITY">
               Municipal
             </mat-option>

@@ -1,40 +1,34 @@
 import { Component, OnInit, ViewChild, OnDestroy } from "@angular/core";
-import { Store, select } from "@ngrx/store";
+import { Store } from "@ngrx/store";
 import { AppState } from "src/store/states/app.state";
 import { MatTableDataSource } from "@angular/material/table";
 import {
-  selectAllCities$,
-  selectCitiesLoading$,
-  getCurrentCity$,
-  selectCitiesMapMode$,
-  getCitiesWithLatestCases$
-} from "src/store/selectors/city.selectors";
+  selectRegionsLoading$,
+  getCurrentRegion$,
+  selectRegionsMapMode$,
+  getRegionsWithLatestCases$
+} from "src/store/selectors/region.selectors";
 import {
-  GetCities,
-  ChangeMode,
-  SelectCity
-} from "src/store/actions/city.actions";
+  SelectRegion
+} from "src/store/actions/region.actions";
 import { MatPaginator } from "@angular/material/paginator";
-import { MapModeEnum, MapModeEnum2LabelMapping } from "src/store/states/city.state";
-import { City } from "src/models/City";
-import { Subscription, combineLatest } from "rxjs";
-import { MatSort, MatSortable, Sort } from "@angular/material/sort";
-import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
-import { TimeSeries } from "src/models/TimeSeries";
+import { Region } from "src/models/Region";
+import { Subscription } from "rxjs";
+import { MatSort, MatSortable } from "@angular/material/sort";
 
 @Component({
-  selector: "app-city-list",
-  templateUrl: "./city-list.component.html",
-  styleUrls: ["./city-list.component.scss"]
+  selector: "app-region-list",
+  templateUrl: "./region-list.component.html",
+  styleUrls: ["./region-list.component.scss"]
 })
-export class CityListComponent implements OnInit, OnDestroy {
+export class RegionListComponent implements OnInit, OnDestroy {
   subscriptions$: Subscription[];
-  dataSource: MatTableDataSource<City>;
+  dataSource: MatTableDataSource<Region>;
   displayedColumns: string[] = ["nome", "confirmed", "deaths"];
 
-  loading$ = this.store.select(selectCitiesLoading$);
-  facility$ = this.store.select(getCurrentCity$);
-  mapMode$ = this.store.select(selectCitiesMapMode$);
+  loading$ = this.store.select(selectRegionsLoading$);
+  region$ = this.store.select(getCurrentRegion$);
+  mapMode$ = this.store.select(selectRegionsMapMode$);
 
   modoSelecionado = "SELECT_CITY";
 
@@ -51,9 +45,9 @@ export class CityListComponent implements OnInit, OnDestroy {
       this.dataSource.paginator = this.paginator;
       this.sort.sort({ id: "confirmed", start: "desc" } as MatSortable);
       this.subscriptions$ = [
-        getCitiesWithLatestCases$(this.store).subscribe(cities => {
+        getRegionsWithLatestCases$(this.store).subscribe(regions => {
           const objectArray = [];
-          Object.keys(cities).forEach(k => objectArray.push(cities[k]));
+          Object.keys(regions).forEach(k => objectArray.push(regions[k]));
           this.dataSource.data = objectArray;
           this.dataSource.sort = this.sort;
         })
@@ -65,8 +59,8 @@ export class CityListComponent implements OnInit, OnDestroy {
     this.subscriptions$.forEach(s$ => s$.unsubscribe());
   }
 
-  openCity(row) {
-    this.store.dispatch(SelectCity({ city: row }));
+  openRegion(row) {
+    this.store.dispatch(SelectRegion({ region: row }));
   }
 
   applyFilter(event: Event) {

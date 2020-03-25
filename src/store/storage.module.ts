@@ -7,14 +7,14 @@ import { reducers } from ".";
 import { environment } from "src/environments/environment";
 
 import { UIEffects } from "./effects/ui.effects";
-import { CitiesEffects } from "./effects/city.effects";
+import { RegionsEffects } from "./effects/region.effects";
 import { TimeSeriesEffects } from './effects/timeseries.effects';
 
 @NgModule({
   imports: [
     StoreModule.forRoot(reducers, {}),
     EffectsModule.forRoot([
-      CitiesEffects,
+      RegionsEffects,
       TimeSeriesEffects,
       UIEffects
     ]),

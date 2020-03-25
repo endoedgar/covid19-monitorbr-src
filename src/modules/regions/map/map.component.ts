@@ -2,32 +2,29 @@ import {
   AfterViewInit,
   Component,
   OnInit,
-  Injector,
-  ComponentFactoryResolver,
   ViewChild,
   AfterContentInit
 } from "@angular/core";
 import * as L from "leaflet";
-import { NgElement, WithProperties } from "@angular/elements";
 import { HttpClient } from "@angular/common/http";
-import { Observable, forkJoin, Subscription, combineLatest, from } from "rxjs";
-import { City } from "src/models/City";
+import { Observable, Subscription, from } from "rxjs";
+import { Region } from "src/models/Region";
 import { AppState } from "src/store/states/app.state";
 import { Store } from "@ngrx/store";
 import {
-  selectCitiesLoading$,
-  getCitiesWithLatestCases$,
-  getCurrentCity$
-} from "src/store/selectors/city.selectors";
+  selectRegionsLoading$,
+  getRegionsWithLatestCases$,
+  getCurrentRegion$
+} from "src/store/selectors/region.selectors";
 import { TimeSeriesService } from "src/services/timeseries.service";
-import { GetCities, SelectCity, ChangeMode } from "src/store/actions/city.actions";
-import { TimeSeries } from "src/models/TimeSeries";
+import { GetRegions, SelectRegion, ChangeMode } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
-import { map, pairwise, scan, toArray, startWith } from "rxjs/operators";
+import { scan, toArray } from "rxjs/operators";
 import Chart from "chart.js";
 import { MatSidenav } from "@angular/material/sidenav";
-import { MapModeEnum } from 'src/store/states/city.state';
+import { MapModeEnum } from 'src/store/states/region.state';
 
+// função que colore as bolinhas e estados
 function getColor(d) {
   return d > 1000
     ? "#3f0012"
@@ -52,14 +49,14 @@ function getColor(d) {
   styleUrls: ["./map.component.scss"]
 })
 export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
-  loading$ = this.store.select(selectCitiesLoading$);
-  city$ = this.store.select(getCurrentCity$);
+  loading$ = this.store.select(selectRegionsLoading$);
+  region$ = this.store.select(getCurrentRegion$);
   private map;
-  city: City;
+  region: Region;
   subscriptions$: Subscription[];
   hightlightSelect;
   markersMunicipios: any[];
-  municipios: City[];
+  municipios: Region[];
   totalConfirmed: number;
   totalDeath: number;
   ultimaAtualizacao$: Observable<Date>;
@@ -79,7 +76,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   }
 
   ngOnInit() {
-    this.store.dispatch(GetCities());
+    this.store.dispatch(GetRegions());
     this.store.dispatch(GetTimeSeries());
     this.store.dispatch(ChangeMode({mode:MapModeEnum.SELECT_CITY}));
   }
@@ -136,6 +133,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   }
 
   ngAfterContentInit(): void {
+    this.store.subscribe(console.log);
     this.subscriptions$ = [
       // desenhar fronteiras do brasil
       this.getJSON("assets/data/brazil.json").subscribe(brasil => {
@@ -148,7 +146,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
           .addTo(this.map)
           .bringToBack();
       }),
-      getCitiesWithLatestCases$(this.store).subscribe((municipios: City[]) => {
+      getRegionsWithLatestCases$(this.store).subscribe((municipios: Region[]) => {
         this.municipios = municipios;
         this.initMap();
 
@@ -157,11 +155,11 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
         document.documentElement.style.setProperty("--vh", `${vh}px`);
       }),
 
-      this.store.select(getCurrentCity$).subscribe(city => {
-        if (typeof city != "undefined") {
-          const bolinha = this?.markersMunicipios[city?.codigo_ibge];
+      this.store.select(getCurrentRegion$).subscribe(region => {
+        if (typeof region != "undefined") {
+          const bolinha = this?.markersMunicipios[region?.codigo_ibge];
           if (typeof bolinha != "undefined") {
-            this.mostraPopup(bolinha, this.municipios[city.codigo_ibge]);
+            this.mostraPopup(bolinha, this.municipios[region.codigo_ibge]);
           }
         }
       })
@@ -294,7 +292,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
     }
   }
 
-  private desenharRegiao(regiaoAtual: City, razao: number) {
+  private desenharRegiao(regiaoAtual: Region, razao: number) {
     if ("latitude" in regiaoAtual.representacao) {
       // cidade
       return L.circleMarker(
@@ -350,7 +348,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
               mouseover: highlightFeature,
               click: e => {
                 this.store.dispatch(
-                  SelectCity({ city: { ...municipioAtual } })
+                  SelectRegion({ region: { ...municipioAtual } })
                 );
               }
             })

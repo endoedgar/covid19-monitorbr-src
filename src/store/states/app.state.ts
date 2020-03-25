@@ -1,7 +1,7 @@
-import { CityState } from './city.state';
+import { RegionState } from './region.state';
 import { TimeSeriesState } from './timeseries.state';
 
 export interface AppState {
-  cities: CityState,
+  regions: RegionState,
   timeseries: TimeSeriesState
 }
