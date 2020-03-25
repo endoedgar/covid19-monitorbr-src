@@ -60,8 +60,9 @@ async function pegar(url) {
       toArray()
     )
     .subscribe(vetor => {
+      vetor.atualizado_em = new Date();
       fs.writeFileSync(
-        `${new Date().toISOString()}.json`,
+        `../src/assets/data.json`,
         JSON.stringify(vetor)
       );
     });

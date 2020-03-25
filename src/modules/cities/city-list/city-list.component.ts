@@ -6,7 +6,8 @@ import {
   selectAllCities$,
   selectCitiesLoading$,
   getCurrentCity$,
-  selectCitiesMapMode$
+  selectCitiesMapMode$,
+  getCitiesWithLatestCases$
 } from "src/store/selectors/city.selectors";
 import {
   GetCities,
@@ -16,8 +17,10 @@ import {
 import { MatPaginator } from "@angular/material/paginator";
 import { MapModeEnum } from "src/store/states/city.state";
 import { City } from "src/models/City";
-import { Subscription } from "rxjs";
+import { Subscription, combineLatest } from "rxjs";
 import { MatSort, MatSortable, Sort } from "@angular/material/sort";
+import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
+import { TimeSeries } from "src/models/TimeSeries";
 
 @Component({
   selector: "app-city-list",
@@ -27,7 +30,7 @@ import { MatSort, MatSortable, Sort } from "@angular/material/sort";
 export class CityListComponent implements OnInit, OnDestroy {
   subscriptions$: Subscription[];
   dataSource: MatTableDataSource<City>;
-  displayedColumns: string[] = ["nome", "confirmed", "deaths", "recovery"];
+  displayedColumns: string[] = ["nome", "confirmed", "deaths"];
   loading$ = this.store.select(selectCitiesLoading$);
   facility$ = this.store.select(getCurrentCity$);
   mapMode$ = this.store.select(selectCitiesMapMode$);
@@ -40,19 +43,21 @@ export class CityListComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     //this.store.dispatch(GetCities());
-    this.subscriptions$ = [
-      this.store.select(selectAllCities$).subscribe(cities => {
-        this.dataSource = new MatTableDataSource(cities);
-      })
-    ];
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-
     setTimeout(_ => {
-      this.sort.sort({ id: "deaths", start: "desc" } as MatSortable);
-      this.dataSource.sort = this.sort;
+      this.dataSource = this.dataSource = new MatTableDataSource();
+      this.dataSource.paginator = this.paginator;
+      this.sort.sort({ id: "confirmed", start: "desc" } as MatSortable);
+      this.subscriptions$ = [
+        getCitiesWithLatestCases$(this.store).subscribe(cities => {
+          const objectArray = [];
+          Object.keys(cities).forEach(k => objectArray.push(cities[k]));
+          this.dataSource.data = objectArray;
+          this.dataSource.sort = this.sort;
+        })
+      ];
     });
   }
 
@@ -66,7 +71,9 @@ export class CityListComponent implements OnInit, OnDestroy {
   }
 
   applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
+    if (this.dataSource) {
+      const filterValue = (event.target as HTMLInputElement).value;
+      this.dataSource.filter = filterValue.trim().toLowerCase();
+    }
   }
 }

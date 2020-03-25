@@ -1,6 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~leaflet/dist/leaflet.css";
-@import "leaflet-sidebar-v2/css/leaflet-sidebar.min.css";
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
@@ -30,3 +29,20 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
     margin-right: 8px;
     opacity: 0.7;
 }
+
+@media screen and (max-width: 400px) {
+    .mat-column-confirmados, .mat-column-mortes, .mat-column-recuperados, .mat-paginator-range-label {
+      display:none !important;
+    }
+
+    table, .mat-paginator {
+      font-size: 10px !important;
+    }
+
+    .mat-cell, tr, button, .mat-header-cell {
+      font-size: 1em !important;
+    }
+    html {
+        font-size: 10px;
+    }
+  }

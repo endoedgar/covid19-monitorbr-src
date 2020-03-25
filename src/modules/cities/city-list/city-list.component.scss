@@ -12,6 +12,10 @@ table {
     padding: 0.5em !important;
     height: auto !important;
   }
+  tr:hover {
+    background-color: lightblue;
+    cursor: pointer;
+  }
 
   .number {
     text-align: right;
@@ -23,18 +27,4 @@ table {
     justify-content: space-between;
     justify-items: center;
     height: 100%
-  }
-
-  @media screen and (max-width: 400px) {
-    .mat-column-confirmados, .mat-column-mortes, .mat-column-recuperados, .mat-paginator-range-label {
-      display:none !important;
-    }
-
-    table, .mat-paginator {
-      font-size: 10px !important;
-    }
-
-    .mat-cell, tr, button, .mat-header-cell {
-      font-size: 1em !important;
-    }
   }

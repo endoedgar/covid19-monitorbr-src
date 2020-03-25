@@ -3,7 +3,8 @@ import { timeSeriesAdapter, TimeSeriesState } from '../states/timeseries.state';
 import { TimeSeries } from 'src/models/TimeSeries';
 
 export const {
-    selectAll: _selectAllTimeSeries
+    selectAll: _selectAllTimeSeries,
+    selectEntities: _selectCitiesEntities
 } = timeSeriesAdapter.getSelectors();
 
 export const selectTimeSeriesState$ = createFeatureSelector<TimeSeriesState>("timeseries");
@@ -11,6 +12,11 @@ export const selectTimeSeriesState$ = createFeatureSelector<TimeSeriesState>("ti
 export const selectAllTimeSeries$ = createSelector(
     selectTimeSeriesState$,
     _selectAllTimeSeries
+);
+
+export const selectAllTimeSeriesEntities$ = createSelector(
+    selectTimeSeriesState$,
+    _selectCitiesEntities
 );
 
 export const selectTimeSeriesLoading$ = createSelector(

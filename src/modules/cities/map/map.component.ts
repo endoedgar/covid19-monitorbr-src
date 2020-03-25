@@ -3,7 +3,9 @@ import {
   Component,
   OnInit,
   Injector,
-  ComponentFactoryResolver
+  ComponentFactoryResolver,
+  ViewChild,
+  AfterContentInit
 } from "@angular/core";
 import * as L from "leaflet";
 import { NgElement, WithProperties } from "@angular/elements";
@@ -14,27 +16,17 @@ import { AppState } from "src/store/states/app.state";
 import { Store } from "@ngrx/store";
 import {
   selectCitiesLoading$,
-  selectCitiesEntities$,
-  getCurrentCity$,
-  selectAllCities$
+  getCitiesWithLatestCases$,
+  getCurrentCity$
 } from "src/store/selectors/city.selectors";
-import { GetCities } from "src/store/actions/city.actions";
+import { TimeSeriesService } from "src/services/timeseries.service";
+import { GetCities, SelectCity } from "src/store/actions/city.actions";
 import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
 import { TimeSeries } from "src/models/TimeSeries";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
-import { map, pairwise, scan, toArray } from "rxjs/operators";
+import { map, pairwise, scan, toArray, startWith } from "rxjs/operators";
 import Chart from "chart.js";
-
-var timer = function(name) {
-  var start = new Date();
-  return {
-    stop: function() {
-      var end = new Date();
-      var time = end.getTime() - start.getTime();
-      console.log("Timer:", name, "finished in", time, "ms");
-    }
-  };
-};
+import { MatSidenav } from "@angular/material/sidenav";
 
 function getColor(d) {
   return d > 1000
@@ -59,58 +51,31 @@ function getColor(d) {
   templateUrl: "./map.component.html",
   styleUrls: ["./map.component.scss"]
 })
-export class MapComponent implements OnInit, AfterViewInit {
+export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   loading$ = this.store.select(selectCitiesLoading$);
   city$ = this.store.select(getCurrentCity$);
   private map;
   city: City;
   subscriptions$: Subscription[];
   hightlightSelect;
+  markersMunicipios: any[];
+  municipios: any;
+  totalConfirmed : number;
+  totalDeath: number;
+  ultimaAtualizacao$ : Observable<Date>;
+  @ViewChild("drawer") public sidenav: MatSidenav;
 
-  getCitiesWithLatestCases$ = combineLatest(
-    this.store.select(selectAllCities$),
-    this.store.select(selectAllTimeSeries$),
-    (cities: City[], allTimeSeries: TimeSeries[]) => {
-      const t = timer("combineLatest");
-      const retornar = cities
-        .map(city => {
-          const timeseries = allTimeSeries.filter(
-            timeserie => timeserie.city_ibge_code == city.codigo_ibge
-          );
-
-          const total = timeseries.reduce(
-            (prev, curr) => ({
-              totalCases: prev.totalCases + curr.confirmeddiff,
-              totalDeaths: prev.totalDeaths + curr.deathsdiff
-            }),
-            { totalCases: 0, totalDeaths: 0 }
-          );
-
-          return {
-            ...city,
-            totalCases: total.totalCases,
-            totalDeaths: total.totalDeaths,
-            timeseries
-          };
-        })
-        .reduce((prev, current) => {
-          return { ...prev, [current.codigo_ibge]: current };
-        }, {});
-      t.stop();
-
-      console.log(JSON.stringify(retornar));
-      return retornar;
-    }
-  );
-
-  getCitiesWithLatestCasesFast$ = this.getJSON("assets/data/data.json");
+  /*getCitiesWithLatestCasesFast$ = this.getJSON("assets/data/data.json");*/
 
   constructor(
     private http: HttpClient,
     private store: Store<AppState>,
     private componentFactoryResolver: ComponentFactoryResolver,
-    private injector: Injector
-  ) {}
+    private injector: Injector,
+    private timeSeriesService : TimeSeriesService
+  ) {
+    this.ultimaAtualizacao$ = timeSeriesService.getUltimaAtualizacao();
+  }
 
   public getJSON(jsonURL): Observable<any> {
     return this.http.get(jsonURL);
@@ -166,252 +131,239 @@ export class MapComponent implements OnInit, AfterViewInit {
     );
 
     tiles.addTo(this.map);
-
-    // desenhar fronteiras do brasil
-    this.getJSON("assets/data/brazil.json").subscribe(brasil => {
-      L.geoJSON(brasil, {
-        style: function(feature) {
-          const a = feature.properties && feature.properties.style;
-          return { ...a, weight: 1, fillOpacity: 0 };
-        }
-      }).addTo(this.map);
-    });
-
-    this.getCitiesWithLatestCasesFast$.subscribe(municipios => {
-      this.initMap(municipios);
-    });
   }
 
-  private async initMap(municipios) {
-    const self = this;
+  ngAfterContentInit(): void {
 
-    function style(feature) {
-      const municipio = municipios[feature.properties.id];
-
-      const a = feature.properties && feature.properties.style;
-      let addProperties: any;
-      addProperties = {
-        fillOpacity: 0,
-        weight: 0
-      };
-
-      if (municipio == undefined) {
-      } else {
-        if (municipio?.timeseries.length) {
-          addProperties.color = getColor(municipio.totalCases);
-          addProperties.fillOpacity = 0.8;
-          addProperties.weight = 1;
-          addProperties.color = getColor(municipio.totalCases);
+    this.subscriptions$ = [
+      // desenhar fronteiras do brasil
+      this.getJSON("assets/data/brazil.json").subscribe(brasil => {
+        L.geoJSON(brasil, {
+          style: function(feature) {
+            const a = feature.properties && feature.properties.style;
+            return { ...a, weight: 1, fillOpacity: 0 };
+          }
+        })
+          .addTo(this.map)
+          .bringToBack();
+      }),
+      getCitiesWithLatestCases$(this.store).subscribe(municipios => {
+        this.municipios = municipios;
+        this.initMap();
+        //console.log(municipios);
+      }),
+      this.store.select(getCurrentCity$).subscribe(city => {
+        if (typeof city != "undefined") {
+          const bolinha = this?.markersMunicipios[city?.codigo_ibge];
+          if (typeof bolinha != "undefined") {
+            this.click(bolinha, this.municipios[city.codigo_ibge]);
+          }
         }
-      }
-      return { ...a, ...addProperties };
+      })
+    ];
+
+    /*this.getCitiesWithLatestCasesFast$.subscribe(municipios => {
+      this.initMap(municipios);
+    });*/
+  }
+
+  async click(layer, municipio) {
+    this.sidenav.close();
+    const ibge = municipio.codigo_ibge;
+    let popupContent = `<h1>${municipio.nome}</h1>
+      Confirmados: <b>0</b>
+      `;
+
+    if (municipio?.timeseries) {
+      //municipio.timeseries.unshift({ cases: 0, date: null });
+      const ultimoCaso = municipio.timeseries[municipio.timeseries.length - 1];
+
+      popupContent = `<h1>${municipio.nome}</h1>
+      Confirmados: <b>${municipio.confirmed}</b><br/>
+      Mortes: <b style='color: red;'>${municipio.deaths}</b><br/>
+      <div style='margin-left:10px;'><canvas style='clear:both; 
+      position: relative;' id='chart${ibge}'></canvas>Última atualização: <b style="color: red">${ultimoCaso.date}</b></div>`;
     }
 
-    async function click(layer, municipio, ibge) {
-      let popupContent = `<h1>${municipio.name}</h1>
-        Confirmados: <b>0</b>
-        `;
+    await layer
+      .unbindPopup()
+      .bindPopup(popupContent, { autoPan: true, maxWidth: "auto" })
+      .openPopup();
 
-      if (municipio?.timeseries?.length) {
-        municipio.timeseries.unshift({ cases: 0, date: null });
-        const ultimoCaso =
-          municipio.timeseries[municipio.timeseries.length - 1];
+    const canvas = <HTMLCanvasElement>document.getElementById(`chart${ibge}`);
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
 
-        popupContent = `<h1>${municipio.nome}</h1>
-        Confirmados: <b>${municipio.totalCases}</b><br/>
-        Última atualização: <b style="color: red">${ultimoCaso.date}</b>
-        <table><tr><th>Data</th><th>Casos</th><th>Novos</th></tr>`;
+      const validDates = municipio.timeseries
+        .filter(timeseries => Date.parse(timeseries.date))
+        .map(timeseries => ({
+          ...timeseries,
+          date: new Date(Date.parse(timeseries.date))
+        }));
 
-        popupContent = `<h1>${municipio.nome}</h1>
-        Confirmados: <b>${municipio.totalCases}</b><br/>
-        Mortes: <b style='color: red;'>${municipio.totalDeaths}</b><br/>
-        <div style='margin-left:10px;'><canvas style='clear:both; 
-        position: relative;' id='chart${ibge}'></canvas>Última atualização: <b style="color: red">${ultimoCaso.date}</b></div>`;
-      }
+      const dias = validDates
+        .filter(
+          timeseries =>
+            timeseries.confirmeddiff > 0 || timeseries.deathsdiff > 0
+        )
+        .map(timeseries => ({
+          x: timeseries.date,
+          confirmeddiff: timeseries.confirmeddiff,
+          deathsdiff: timeseries.deathsdiff
+        }));
 
-      await layer
-        .unbindPopup()
-        .bindPopup(popupContent, { autoPan: true, maxWidth: "auto" })
-        .openPopup();
+      type dia_data = {
+        x: Date;
+        confirmeddiff: number;
+        deathsdiff: number;
+        confirmedsum: number;
+        deathssum: number;
+      };
+      from(dias)
+        .pipe(
+          scan(
+            (acc: dia_data, value: dia_data) => {
+              return {
+                x: value.x,
+                confirmeddiff: value.confirmeddiff,
+                deathsdiff: value.deathsdiff,
+                confirmedsum: acc.confirmedsum + value.confirmeddiff,
+                deathssum: acc.deathssum + value.deathsdiff
+              };
+            },
+            {
+              x: null,
+              confirmeddiff: 0,
+              deathsdiff: 0,
+              confirmedsum: 0,
+              deathssum: 0
+            }
+          ),
+          toArray()
+        )
+        .subscribe(dadosGerais => {
+          const confirmed = [];
+          const confirmedSum = [];
+          const deaths = [];
+          const deathsSum = [];
 
-      const canvas = <HTMLCanvasElement>document.getElementById(`chart${ibge}`);
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
+          dadosGerais.forEach(dadoGeral => {
+            function s(dados) {
+              return { x: dadoGeral.x, y: dados };
+            }
 
-        const validDates = municipio.timeseries
-          .filter(timeseries => Date.parse(timeseries.date))
-          .map(timeseries => ({
-            ...timeseries,
-            date: new Date(Date.parse(timeseries.date))
-          }));
+            confirmed.push(s(dadoGeral.confirmeddiff));
+            confirmedSum.push(s(dadoGeral.confirmedsum));
+            deaths.push(s(dadoGeral.deathsdiff));
+            deathsSum.push(s(dadoGeral.deathssum));
+          });
 
-        const dias = validDates
-          .filter(
-            timeseries =>
-              timeseries.confirmeddiff > 0 || timeseries.deathsdiff > 0
-          )
-          .map(timeseries => ({
-            x: timeseries.date,
-            confirmeddiff: timeseries.confirmeddiff,
-            deathsdiff: timeseries.deathsdiff
-          }));
+          console.log(confirmed);
 
-        type dia_data = {
-          x: Date;
-          confirmeddiff: number;
-          deathsdiff: number;
-          confirmedsum: number;
-          deathssum: number;
-        };
-        from(dias)
-          .pipe(
-            scan(
-              (acc: dia_data, value: dia_data) => {
-                return {
-                  x: value.x,
-                  confirmeddiff: value.confirmeddiff,
-                  deathsdiff: value.deathsdiff,
-                  confirmedsum: acc.confirmedsum + value.confirmeddiff,
-                  deathssum: acc.deathssum + value.deathsdiff
-                };
-              },
-              {
-                x: null,
-                confirmeddiff: 0,
-                deathsdiff: 0,
-                confirmedsum: 0,
-                deathssum: 0
-              }
-            ),
-            toArray()
-          )
-          .subscribe(dadosGerais => {
-            const confirmed = [];
-            const confirmedSum = [];
-            const deaths = [];
-            const deathsSum = [];
-
-            dadosGerais.forEach(dadoGeral => {
-              function s(dados) {
-                return { x: dadoGeral.x, y: dados };
-              }
-
-              confirmed.push(s(dadoGeral.confirmeddiff));
-              confirmedSum.push(s(dadoGeral.confirmedsum));
-              deaths.push(s(dadoGeral.deathsdiff));
-              deathsSum.push(s(dadoGeral.deathssum));
-            });
-
-            console.log(confirmed);
-
-            let myChart = new Chart(ctx, {
-              type: "line",
-              data: {
-                datasets: [
+          let myChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              datasets: [
+                {
+                  label: "Confirmados",
+                  data: confirmedSum
+                },
+                {
+                  label: "Mortes",
+                  data: deathsSum,
+                  backgroundColor: "#FF9999"
+                }
+              ]
+            },
+            options: {
+              scales: {
+                xAxes: [
                   {
-                    label: "Confirmados",
-                    data: confirmedSum
-                  },
-                  {
-                    label: "Mortes",
-                    data: deathsSum,
-                    backgroundColor: "#FF9999"
+                    type: "time",
+                    time: {
+                      displayFormats: {
+                        quarter: "D MMM"
+                      }
+                    }
                   }
                 ]
               },
-              options: {
-                scales: {
-                  xAxes: [
-                    {
-                      type: "time",
-                      time: {
-                        displayFormats: {
-                          quarter: "D MMM"
-                        }
-                      }
-                    }
-                  ]
-                },
-                responsive: true
-              }
-            });
+              responsive: true
+            }
           });
-      }
+        });
     }
+  }
 
-    async function clickFeature(event) {
-      const ibge = event.target.feature.properties.id;
-      const municipio = municipios[ibge];
-      const layer = event.target;
+  private async initMap() {
+    this.markersMunicipios = [];
 
-      click(layer, municipio, ibge)
-    }
-
-    function onEachFeature(feature, layer) {
-      layer.on({
-        mouseover: highlightFeature,
-        mouseout: resetHighlight,
-        click: clickFeature
-      });
-    }
-
-    let geoJSON;
-
-    /*this.getJSON("assets/data/geojs-100-mun.json").subscribe(municipiosJSON => {
-
-      geoJSON = L.geoJSON(municipiosJSON, {
-        style: style,
-
-        onEachFeature: onEachFeature
-      }).addTo(this.map);
-    });*/
-
-    this.getJSON("assets/data/municipios.json").subscribe(municipiosJSON => {
-      const maiorCaso = parseFloat(
-        Object.keys(municipios).reduce(
-          (prev, curr) =>
-            prev < municipios[curr].totalCases
-              ? municipios[curr].totalCases
-              : prev,
-          0
-        )
-      );
-
-      municipiosJSON.forEach(municipio => {
-        const municipioAtual = municipios[municipio.codigo_ibge];
-        if (typeof municipioAtual != "undefined") {
-          if (municipioAtual.totalCases > 0) {
-            const razao = (municipioAtual.totalCases / maiorCaso)
-            console.log(municipioAtual, razao);
-            L.circle([municipio.latitude, municipio.longitude], {
-              color: getColor(municipioAtual.totalCases),
-              radius: Math.max(
-                50.0,
-                300000.0 * razao
-              )
-            }).addTo(this.map).on("click", (e) => { console.log(e); click(e.target, municipioAtual, municipioAtual.codigo_ibge) });
-          }
+    const maiorCaso = Object.keys(this.municipios).reduce(
+      (prev, curr) =>
+        prev < this.municipios[curr].confirmed
+          ? this.municipios[curr].confirmed
+          : prev,
+      0
+    );
+    this.totalDeath = this.totalConfirmed = 0;
+    Object.keys(this.municipios).forEach(ibge => {
+      const municipioAtual = this.municipios[ibge];
+      if (typeof municipioAtual != "undefined") {
+        if (municipioAtual.confirmed > 0) {
+          this.totalConfirmed += municipioAtual.confirmed;
+          this.totalDeath += municipioAtual.deaths;
+          const razao = municipioAtual.confirmed / maiorCaso;
+          const marker = L.circleMarker(
+            [municipioAtual.latitude, municipioAtual.longitude],
+            {
+              color: getColor(municipioAtual.confirmed),
+              fillColor: getColor(municipioAtual.confirmed),
+              weight: 0,
+              radius: Math.max(3.0, 50.0 * razao),
+              fillOpacity: 0.9
+            }
+          )
+            .on({
+              mouseout: dehighlightFeature(municipioAtual),
+              mouseover: highlightFeature,
+              click: e => {
+                this.store.dispatch(
+                  SelectCity({ city: { ...municipioAtual } })
+                );
+              }
+            })
+            .addTo(this.map);
+          this.markersMunicipios[municipioAtual.codigo_ibge] = marker;
         }
-      });
+      }
     });
+
+    function dehighlightFeature(municipioAtual) {
+      return(e) => {
+        var layer = e.target;
+
+        layer.setStyle({
+          color: getColor(municipioAtual.confirmed),
+          fillColor: getColor(municipioAtual.confirmed)
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+          layer.bringToFront();
+        }
+      };
+    }
 
     function highlightFeature(e) {
       var layer = e.target;
 
       layer.setStyle({
-        weight: 1,
-        color: "#777",
-        dashArray: "",
-        fillOpacity: 0.7
+        fillColor: "#777",
+        
       });
 
       if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
         layer.bringToFront();
       }
-    }
-
-    function resetHighlight(e) {
-      geoJSON.resetStyle(e.target);
     }
   }
 }

@@ -1,3 +1,27 @@
+.example-container {
+  width: 500px;
+  height: 300px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.info {
+  font-size: 1rem;
+}
+.leftbottomtext {
+  color: white;
+  font-size: 1.5rem;
+}
+.example-sidenav-content {
+  display: flex;
+  height: 80%;
+  align-items: center;
+  justify-content: center;
+}
+
+.example-sidenav {
+  padding: 20px;
+}
+
 .map-container {
     position: absolute;
     top: 0;

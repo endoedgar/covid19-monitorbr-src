@@ -41,19 +41,6 @@
           {{ element.deaths }}
         </td>
       </ng-container>
-      <ng-container matColumnDef="recovery">
-        <th class="desktop-only" mat-header-cell *matHeaderCellDef mat-sort-header>
-          Recuperados
-        </th>
-        <td
-          class="desktop-only"
-          mat-cell
-          *matCellDef="let element"
-          class="number"
-        >
-          {{ element.recovery }}
-        </td>
-      </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr

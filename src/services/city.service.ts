@@ -11,14 +11,11 @@ export class CityService {
   constructor(private httpClient : HttpClient) {}
 
   public getCities(): Observable<any> {
-    const obs$ = this.httpClient.get("assets/data/geojs-100-mun.json").pipe(
-      switchMap((json : any) => json.features),
+    const obs$ = this.httpClient.get("assets/data/municipios.json").pipe(
+      switchMap((json : any) => json),
       map(
-        (feature: any) =>
-          <City>{
-            codigo_ibge: feature.properties.id,
-            nome: feature.properties.name
-          }
+        (city: any) =>
+          ({...city, confirmed: 0, deaths: 0})
       )
     );
 

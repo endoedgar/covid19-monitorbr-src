@@ -6,7 +6,6 @@ import { StoreModule } from "@ngrx/store";
 import { reducers } from 'src/store';
 import { EffectsModule } from "@ngrx/effects";
 import { BodyReduxComponent } from "./body/body.component";
-import { EsriMapComponent } from "./esri-map/esri-map.component";
 import { CitiesEffects } from 'src/store/effects/city.effects'
 import { CityListComponent } from './city-list/city-list.component';
 
@@ -20,7 +19,6 @@ import {MatFormFieldModule } from '@angular/material/form-field';
 import {MatInputModule } from '@angular/material/input';
 import {MatSidenavModule } from '@angular/material/sidenav';
 import { MapComponent } from './map/map.component';
-import { TimeSeries } from 'src/models/TimeSeries';
 import { TimeSeriesEffects } from 'src/store/effects/timeseries.effects';
 import { PopupCityChartComponent } from './popup-city-chart/popup-city-chart.component';
 import { createCustomElement } from "@angular/elements";
@@ -28,7 +26,6 @@ import { createCustomElement } from "@angular/elements";
 @NgModule({
   declarations: [
     BodyReduxComponent,
-    EsriMapComponent,
     CityListComponent,
     MapComponent,
     PopupCityChartComponent

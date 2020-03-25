@@ -25,11 +25,12 @@ export const reducer = createReducer(
     error: null,
     loading: true
   })),
-  on(GetTimeSeriesSuccess, (state, action) => 
-    timeSeriesAdapter.addAll(action.timeseries, {
+  on(GetTimeSeriesSuccess, (state, action) => {
+    return timeSeriesAdapter.setAll(action.timeseries, {
       ...state,
       error: null,
       loading: false
     })
+  }
   )
 );
