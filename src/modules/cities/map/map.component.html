@@ -4,6 +4,19 @@
   </mat-drawer>
   <div class="sidenav-content">
     <div id="map">
+      <div class="middle">
+        <mat-form-field>
+          <mat-label>Mapa</mat-label>
+          <mat-select [(value)]="selected" (selectionChange)="mudancaDeModo($event)" value="">
+            <mat-option value="SELECT_CITY">
+              Municipal
+            </mat-option>
+            <mat-option value="SELECT_STATE">
+              Estadual
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
       <div class="leaflet-control-container">
         <div class="leaflet-top leaflet-right">
           <div class="leaflet-bar leaflet-control">

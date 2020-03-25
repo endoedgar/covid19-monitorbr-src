@@ -8,7 +8,8 @@ import {
   concatMapTo,
   mergeMap,
   filter,
-  pairwise
+  pairwise,
+  toArray
 } from "rxjs/operators";
 
 import { CityService } from "../../services/city.service";
@@ -39,7 +40,8 @@ export class CitiesEffects {
   GetCities: Observable<any> = this.actions.pipe(
     ofType(GetCities),
     switchMap(_ => {
-      return concat(this.cityService.getStates()).pipe(
+      return merge(this.cityService.getStates(), this.cityService.getCities()).pipe(
+        toArray(),
         map((cities : City[]) => {
           return GetCitiesSuccess({ cities });
         }),

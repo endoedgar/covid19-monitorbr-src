@@ -66,7 +66,6 @@ export class CityListComponent implements OnInit, OnDestroy {
   }
 
   openCity(row) {
-    this.store.dispatch(ChangeMode({ mode: MapModeEnum.SELECT_CITY }));
     this.store.dispatch(SelectCity({ city: row }));
   }
 
@@ -75,9 +74,5 @@ export class CityListComponent implements OnInit, OnDestroy {
       const filterValue = (event.target as HTMLInputElement).value;
       this.dataSource.filter = filterValue.trim().toLowerCase();
     }
-  }
-
-  mudancaDeModo(event) {
-    this.store.dispatch(ChangeMode({mode:event.value}));
   }
 }

@@ -20,13 +20,13 @@ import {
   getCurrentCity$
 } from "src/store/selectors/city.selectors";
 import { TimeSeriesService } from "src/services/timeseries.service";
-import { GetCities, SelectCity } from "src/store/actions/city.actions";
-import { selectAllTimeSeries$ } from "src/store/selectors/timeseries.selectors";
+import { GetCities, SelectCity, ChangeMode } from "src/store/actions/city.actions";
 import { TimeSeries } from "src/models/TimeSeries";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { map, pairwise, scan, toArray, startWith } from "rxjs/operators";
 import Chart from "chart.js";
 import { MatSidenav } from "@angular/material/sidenav";
+import { MapModeEnum } from 'src/store/states/city.state';
 
 function getColor(d) {
   return d > 1000
@@ -63,9 +63,8 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   totalConfirmed: number;
   totalDeath: number;
   ultimaAtualizacao$: Observable<Date>;
+  selected = "SELECT_CITY";
   @ViewChild("drawer") public sidenav: MatSidenav;
-
-  /*getCitiesWithLatestCasesFast$ = this.getJSON("assets/data/data.json");*/
 
   constructor(
     private http: HttpClient,
@@ -82,6 +81,11 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   ngOnInit() {
     this.store.dispatch(GetCities());
     this.store.dispatch(GetTimeSeries());
+    this.store.dispatch(ChangeMode({mode:MapModeEnum.SELECT_CITY}));
+  }
+
+  mudancaDeModo(event) {
+    this.store.dispatch(ChangeMode({mode:event.value}));
   }
 
   addSidebar() {}
@@ -320,6 +324,8 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   }
 
   private async initMap() {
+
+    this.markersMunicipios?.forEach(marker => this.map.removeLayer(marker));
     this.markersMunicipios = [];
 
     const maiorCaso = Object.keys(this.municipios).reduce(
