@@ -8,25 +8,37 @@ import { City } from "src/models/City";
 
 @Injectable({ providedIn: "root" })
 export class CityService {
-  constructor(private httpClient : HttpClient) {}
+  constructor(private httpClient: HttpClient) {}
 
-  public getCities(): Observable<any> {
+  public getCities(): Observable<City[]> {
     const obs$ = this.httpClient.get("assets/data/municipios.json").pipe(
-      switchMap((json : any) => json),
-      map(
-        (city: any) =>
-          ({...city, confirmed: 0, deaths: 0})
-      )
+      switchMap((json: any) => json),
+      map((city: any) => ({
+        nome: city.name,
+        codigo_ibge: city.codigo_ibge,
+        confirmed: 0,
+        deaths: 0,
+        representacao: { longitude: city.longitude, latitude: city.latitude }
+      })),
+      toArray()
     );
 
     return obs$;
   }
 
-  public getCitiesLeaf(): Observable<any> {
-    const obs$ = this.getCities()
-      .pipe(
-        toArray()
-      );
+  public getStates(): Observable<City[]> {
+    const obs$ = this.httpClient.get("assets/data/brazil-states.geojson").pipe(
+      switchMap((json: any) => json.features),
+      map((state: any) => ({
+        nome: state.properties.name,
+        codigo_ibge: state.properties.codigo_ibg,
+        representacao: state.geometry.coordinates[0],
+        confirmed: 0,
+        deaths: 0
+      })),
+      toArray()
+    );
+
     return obs$;
   }
 }

@@ -18,6 +18,7 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatFormFieldModule } from '@angular/material/form-field';
 import {MatInputModule } from '@angular/material/input';
 import {MatSidenavModule } from '@angular/material/sidenav';
+import {MatSelectModule } from '@angular/material/select';
 import { MapComponent } from './map/map.component';
 import { TimeSeriesEffects } from 'src/store/effects/timeseries.effects';
 import { PopupCityChartComponent } from './popup-city-chart/popup-city-chart.component';
@@ -48,7 +49,8 @@ import { createCustomElement } from "@angular/elements";
     MatSortModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatSelectModule
   ],
   entryComponents: [PopupCityChartComponent],
 })

@@ -59,7 +59,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   subscriptions$: Subscription[];
   hightlightSelect;
   markersMunicipios: any[];
-  municipios: any;
+  municipios: City[];
   totalConfirmed: number;
   totalDeath: number;
   ultimaAtualizacao$: Observable<Date>;
@@ -70,8 +70,6 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
   constructor(
     private http: HttpClient,
     private store: Store<AppState>,
-    private componentFactoryResolver: ComponentFactoryResolver,
-    private injector: Injector,
     private timeSeriesService: TimeSeriesService
   ) {
     this.ultimaAtualizacao$ = timeSeriesService.getUltimaAtualizacao();
@@ -146,44 +144,40 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
           .addTo(this.map)
           .bringToBack();
       }),
-      getCitiesWithLatestCases$(this.store).subscribe(municipios => {
+      getCitiesWithLatestCases$(this.store).subscribe((municipios: City[]) => {
         this.municipios = municipios;
         this.initMap();
-        // First we get the viewport height and we multiple it by 1% to get a value for a vh unit
+
+        // Correção para exibir no browser android
         let vh = window.innerHeight * 0.01;
-        // Then we set the value in the --vh custom property to the root of the document
         document.documentElement.style.setProperty("--vh", `${vh}px`);
-        //console.log(municipios);
       }),
+
       this.store.select(getCurrentCity$).subscribe(city => {
         if (typeof city != "undefined") {
           const bolinha = this?.markersMunicipios[city?.codigo_ibge];
           if (typeof bolinha != "undefined") {
-            this.click(bolinha, this.municipios[city.codigo_ibge]);
+            this.mostraPopup(bolinha, this.municipios[city.codigo_ibge]);
           }
         }
       })
     ];
-
-    /*this.getCitiesWithLatestCasesFast$.subscribe(municipios => {
-      this.initMap(municipios);
-    });*/
   }
 
-  async click(layer, municipio) {
+  // TODO usar componente do Angular em vez de montar um em HTML
+  async mostraPopup(layer, regiao) {
     this.sidenav.close();
-    const ibge = municipio.codigo_ibge;
-    let popupContent = `<h1>${municipio.nome}</h1>
+    const ibge = regiao.codigo_ibge;
+    let popupContent = `<h1>${regiao.nome}</h1>
       Confirmados: <b>0</b>
       `;
 
-    if (municipio?.timeseries) {
-      //municipio.timeseries.unshift({ cases: 0, date: null });
-      const ultimoCaso = municipio.timeseries[municipio.timeseries.length - 1];
+    if (regiao?.timeseries) {
+      const ultimoCaso = regiao.timeseries[regiao.timeseries.length - 1];
 
-      popupContent = `<h1>${municipio.nome}</h1>
-      Confirmados: <b>${municipio.confirmed}</b><br/>
-      Mortes: <b style='color: red;'>${municipio.deaths}</b><br/>
+      popupContent = `<h1>${regiao.nome}</h1>
+      Confirmados: <b>${regiao.confirmed}</b><br/>
+      Mortes: <b style='color: red;'>${regiao.deaths}</b><br/>
       <div style='margin-left:10px;'><canvas style='clear:both; 
       position: relative;' id='chart${ibge}'></canvas>Última atualização: <b style="color: red">${ultimoCaso.date}</b></div>`;
     }
@@ -197,7 +191,7 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
     if (canvas) {
       const ctx = canvas.getContext("2d");
 
-      const validDates = municipio.timeseries
+      const validDates = regiao.timeseries
         .filter(timeseries => Date.parse(timeseries.date))
         .map(timeseries => ({
           ...timeseries,
@@ -261,8 +255,6 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
             deathsSum.push(s(dadoGeral.deathssum));
           });
 
-          console.log(confirmed);
-
           let myChart = new Chart(ctx, {
             type: "line",
             data: {
@@ -298,6 +290,35 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
     }
   }
 
+  private desenharRegiao(regiaoAtual: City, razao: number) {
+    if ("latitude" in regiaoAtual.representacao) {
+      // cidade
+      return L.circleMarker(
+        [
+          regiaoAtual.representacao.latitude,
+          regiaoAtual.representacao.longitude
+        ],
+        {
+          color: getColor(regiaoAtual.confirmed),
+          fillColor: getColor(regiaoAtual.confirmed),
+          weight: 0,
+          radius: Math.max(5, 50.0 * razao),
+          fillOpacity: 0.9
+        }
+      );
+    } else {
+      // estado
+      return L.polygon(regiaoAtual.representacao,
+        {
+          color: getColor(regiaoAtual.confirmed),
+          fillColor: getColor(regiaoAtual.confirmed),
+          weight: 0,
+          fillOpacity: 0.9
+        }
+      );
+    }
+  }
+
   private async initMap() {
     this.markersMunicipios = [];
 
@@ -316,16 +337,8 @@ export class MapComponent implements OnInit, AfterViewInit, AfterContentInit {
           this.totalConfirmed += municipioAtual.confirmed;
           this.totalDeath += municipioAtual.deaths;
           const razao = municipioAtual.confirmed / maiorCaso;
-          const marker = L.circleMarker(
-            [municipioAtual.latitude, municipioAtual.longitude],
-            {
-              color: getColor(municipioAtual.confirmed),
-              fillColor: getColor(municipioAtual.confirmed),
-              weight: 0,
-              radius: Math.max(5, 50.0 * razao),
-              fillOpacity: 0.9
-            }
-          )
+
+          const marker = this.desenharRegiao(municipioAtual, razao)
             .on({
               mouseout: dehighlightFeature(municipioAtual),
               mouseover: highlightFeature,

@@ -1,5 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { cityAdapter, CityState } from '../states/city.state';
+import { cityAdapter, CityState, MapModeEnum } from '../states/city.state';
 
 import { selectAllTimeSeries$ } from './timeseries.selectors'
 import { combineLatest } from 'rxjs';
@@ -58,8 +58,8 @@ var timer = function(name) {
 export const getCitiesWithLatestCases$ = (store) => combineLatest(
     store.select(selectAllCitiesEntities$),
     store.select(selectAllTimeSeries$),
-    (cities: City[], allTimeSeries: TimeSeries[]) => {
-      const t = timer("combineLatest");
+    store.select(selectCitiesMapMode$),
+    (cities: City[], allTimeSeries: TimeSeries[], currentMode : MapModeEnum) => {
       const returnedCities = {};
       allTimeSeries.forEach(
         timeseries => {

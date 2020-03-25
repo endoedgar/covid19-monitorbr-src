@@ -1,5 +1,17 @@
 <div class="container">
   <mat-form-field>
+    <mat-label>Mapa</mat-label>
+    <mat-select (selectionChange)="mudancaDeModo($event)">
+      <mat-option value="SELECT_CITY">
+        Municipal
+      </mat-option>
+      <mat-option value="SELECT_STATE">
+        Estadual
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
     <mat-label>Pesquisar</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Pesquisar" />
   </mat-form-field>
@@ -18,7 +30,12 @@
       </ng-container>
 
       <ng-container matColumnDef="confirmed">
-        <th class="desktop-only" mat-header-cell *matHeaderCellDef mat-sort-header>
+        <th
+          class="desktop-only"
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+        >
           Confirmados
         </th>
         <td
@@ -31,7 +48,14 @@
         </td>
       </ng-container>
       <ng-container matColumnDef="deaths">
-        <th class="desktop-only" mat-header-cell *matHeaderCellDef mat-sort-header>Mortes</th>
+        <th
+          class="desktop-only"
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+        >
+          Mortes
+        </th>
         <td
           class="desktop-only"
           mat-cell

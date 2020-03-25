@@ -14,7 +14,7 @@ import {
 import { CityService } from "../../services/city.service";
 import { TimeSeriesService } from "../../services/timeseries.service";
 
-import { Observable, of, merge, combineLatest, forkJoin } from "rxjs";
+import { Observable, of, merge, combineLatest, forkJoin, concat } from "rxjs";
 import {
   GetCities,
   GetCitiesSuccess,
@@ -39,14 +39,14 @@ export class CitiesEffects {
   GetCities: Observable<any> = this.actions.pipe(
     ofType(GetCities),
     switchMap(_ => {
-      return this.cityService.getCitiesLeaf().pipe(
-        map((cities) => {
+      return concat(this.cityService.getStates()).pipe(
+        map((cities : City[]) => {
           return GetCitiesSuccess({ cities });
         }),
         catchError(err => {
           return of(GetCitiesFailure({ err }));
         })
-      );
+      )
     })
   );
 

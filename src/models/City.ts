@@ -1,9 +1,11 @@
+import { LatLngExpression } from 'leaflet';
+
 export interface City {
     codigo_ibge: number;
     nome: string;
-    latitude: number;
-    longitude: number;
-    geometria:number[][][];
+
+    representacao : {latitude: number;
+        longitude: number;} | LatLngExpression[];
 
     confirmed:number;
     deaths:number;

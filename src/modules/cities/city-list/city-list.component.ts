@@ -15,7 +15,7 @@ import {
   SelectCity
 } from "src/store/actions/city.actions";
 import { MatPaginator } from "@angular/material/paginator";
-import { MapModeEnum } from "src/store/states/city.state";
+import { MapModeEnum, MapModeEnum2LabelMapping } from "src/store/states/city.state";
 import { City } from "src/models/City";
 import { Subscription, combineLatest } from "rxjs";
 import { MatSort, MatSortable, Sort } from "@angular/material/sort";
@@ -31,19 +31,19 @@ export class CityListComponent implements OnInit, OnDestroy {
   subscriptions$: Subscription[];
   dataSource: MatTableDataSource<City>;
   displayedColumns: string[] = ["nome", "confirmed", "deaths"];
+
   loading$ = this.store.select(selectCitiesLoading$);
   facility$ = this.store.select(getCurrentCity$);
   mapMode$ = this.store.select(selectCitiesMapMode$);
-  mapMode: MapModeEnum;
-  facility: City;
+
+  modoSelecionado = "SELECT_CITY";
+
   @ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
   constructor(private store: Store<AppState>) {}
 
-  ngOnInit() {
-    //this.store.dispatch(GetCities());
-  }
+  ngOnInit() { }
 
   ngAfterViewInit() {
     setTimeout(_ => {
@@ -75,5 +75,9 @@ export class CityListComponent implements OnInit, OnDestroy {
       const filterValue = (event.target as HTMLInputElement).value;
       this.dataSource.filter = filterValue.trim().toLowerCase();
     }
+  }
+
+  mudancaDeModo(event) {
+    this.store.dispatch(ChangeMode({mode:event.value}));
   }
 }

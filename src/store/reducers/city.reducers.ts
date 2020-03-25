@@ -29,7 +29,7 @@ export const reducer = createReducer(
     error: null,
     loading: true,
     selectedFacilityId: null,
-    mapMode: MapModeEnum.NONE
+    mapMode: MapModeEnum.SELECT_CITY
   })),
   on(GetCitiesSuccess, (state, action) =>  {
     return cityAdapter.setAll(action.cities, {
@@ -41,12 +41,15 @@ export const reducer = createReducer(
   ),
   on(SelectCity, (state, action) => ({
     ...state,
-    selectedCityId: action.city.codigo_ibge,
-    mapMode: MapModeEnum.SELECT_CITY
+    selectedCityId: action.city.codigo_ibge
   })),
   on(DeselectCity, (state, action) => ({
     ...state,
     selectedCityId: null
   })),
-  on(ChangeMode, (state, action) => ({ ...state, mapMode: action.mode }))
+  on(ChangeMode, (state, action) => ({
+    ...state,
+    mapMode: action.mode,
+    selectedCityId: null
+  }))
 );
