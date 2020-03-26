@@ -48,8 +48,8 @@
           <div class="leaflet-control info legend leaflet-control">
             Monitor COVID-19 - Brasil<br />
             Confirmados: {{ totalConfirmed }} Mortes:
-            <b style="color: red">{{ totalDeath }}</b
-            ><br />
+            <b style="color: red">{{ totalDeath }} </b>
+            <a href="#" (click)="abreAvisoInicial(true)">(obs)</a><br />
             Última atualização: {{ ultimaAtualizacao$ | async | date }}<br />
             Fonte:
             <a href="https://github.com/turicas/covid19-br"

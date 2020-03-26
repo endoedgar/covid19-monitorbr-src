@@ -30,8 +30,10 @@ import { scan, toArray } from "rxjs/operators";
 import Chart from "chart.js";
 import { MatSidenav } from "@angular/material/sidenav";
 import { MapModeEnum } from "src/store/states/region.state";
-import { DatePipe } from '@angular/common';
-import moment from 'moment-timezone';
+import { DatePipe } from "@angular/common";
+import moment from "moment-timezone";
+import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
+import { AvisoInicialComponent } from "../aviso-inicial/aviso-inicial.component";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -81,9 +83,11 @@ export class MapComponent
     private http: HttpClient,
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private dialog: MatDialog
   ) {
     this.ultimaAtualizacao$ = timeSeriesService.getUltimaAtualizacao();
+    this.abreAvisoInicial(false);
   }
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
@@ -200,10 +204,15 @@ export class MapComponent
       Confirmados: <b>${regiao.confirmed}</b><br/>
       Mortes: <b style='color: red;'>${regiao.deaths}</b><br/>
       <div style='margin-left:10px;'><canvas style='clear:both; 
-      position: relative;' id='${divCanvasId}'></canvas>Última atualização: <b style="color: red">${this.datePipe.transform(ultimoCaso.date)}</b></div>`;
+      position: relative;' id='${divCanvasId}'></canvas>Última atualização: <b style="color: red">${this.datePipe.transform(
+        ultimoCaso.date
+      )}</b></div>`;
     }
 
-    layer.unbindPopup().bindPopup(popupContent, { autoPan: true }).openPopup();
+    layer
+      .unbindPopup()
+      .bindPopup(popupContent, { autoPan: true })
+      .openPopup();
 
     const canvas = <HTMLCanvasElement>document.getElementById(divCanvasId);
     if (canvas) {
@@ -318,8 +327,8 @@ export class MapComponent
     }
   }
 
-  private desenharRegiao(regiaoAtual: Region, razao: number) {
-    let marker : L.Path;
+  private desenharRegiao(regiaoAtual : any, razao: number) {
+    let marker: L.Path;
     if ("latitude" in regiaoAtual.representacao) {
       // cidade
       marker = L.circleMarker(
@@ -345,14 +354,35 @@ export class MapComponent
       });
     }
 
+    const ultimoCaso = regiaoAtual?.timeseries[regiaoAtual.timeseries.length - 1];
+
     marker.bindTooltip(
       `<h2>${regiaoAtual.nome}</h2>
       Confirmados: ${regiaoAtual.confirmed}<br/>
-      Mortos: ${regiaoAtual.deaths}
+      Mortos: ${regiaoAtual.deaths}<br/>
+      Última atualização: <b style="color: red">${this.datePipe.transform(
+        ultimoCaso?.date
+      )}</b>
       `
-    )
+    );
 
     return marker;
+  }
+
+  public abreAvisoInicial(forcar : boolean) {
+    const AVISOU_ITEM = "avisou";
+
+    if(!localStorage.getItem(AVISOU_ITEM) || forcar) {
+      const dialogConfig = new MatDialogConfig();
+
+      dialogConfig.disableClose = true;
+      dialogConfig.autoFocus = true;
+      dialogConfig.height = '300px';
+      dialogConfig.width = '500px';
+
+      this.dialog.open(AvisoInicialComponent, dialogConfig);
+      localStorage.setItem(AVISOU_ITEM, new Date().toDateString());
+    }
   }
 
   private limparMarkers() {

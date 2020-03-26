@@ -21,9 +21,11 @@ import { MatSidenavModule } from "@angular/material/sidenav";
 import { MatSelectModule } from "@angular/material/select";
 import { MapComponent } from "./map/map.component";
 import { TimeSeriesEffects } from "src/store/effects/timeseries.effects";
+import { AvisoInicialComponent } from './aviso-inicial/aviso-inicial.component';
+import { MatButtonModule } from '@angular/material/button';
 
 @NgModule({
-  declarations: [BodyReduxComponent, RegionListComponent, MapComponent],
+  declarations: [BodyReduxComponent, RegionListComponent, MapComponent, AvisoInicialComponent],
   imports: [
     CommonModule,
     StoreModule.forFeature("regions", reducers.regions),
@@ -43,7 +45,8 @@ import { TimeSeriesEffects } from "src/store/effects/timeseries.effects";
     MatFormFieldModule,
     MatInputModule,
     MatSidenavModule,
-    MatSelectModule
+    MatSelectModule,
+    MatButtonModule
   ],
   entryComponents: []
 })
