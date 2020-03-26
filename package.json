@@ -1,6 +1,6 @@
 {
-  "name": "covid19brasilmap",
-  "version": "0.0.0",
+  "name": "covid19-monitorbr",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -27,11 +27,9 @@
     "@ngrx/store": "^9.0.0",
     "c": "^0.1.0",
     "chart.js": "^2.9.3",
-    "document-register-element": "^1.7.2",
     "leaflet": "^1.6.0",
     "moment-timezone": "^0.5.28",
     "rxjs": "~6.5.4",
-    "sidebar-v2": "^0.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.10.2"
   },
