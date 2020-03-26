@@ -16,6 +16,14 @@ body {
   display: none;
 }
 
+.mat-typography h1 {
+  font-size: 2em !important;
+}
+
+.mat-dialog-container {
+  padding: 1em !important;
+}
+
 .info {
   padding: 6px 8px;
   font: 1rem Arial, Helvetica, sans-serif;

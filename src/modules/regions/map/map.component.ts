@@ -34,7 +34,10 @@ import { DatePipe } from "@angular/common";
 import moment from "moment-timezone";
 import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
 import { AvisoInicialComponent } from "../aviso-inicial/aviso-inicial.component";
-import { selectTimeSeriesLoading$, selectTimeSeriesUltimaAtualizacao$ } from 'src/store/selectors/timeseries.selectors';
+import {
+  selectTimeSeriesLoading$,
+  selectTimeSeriesUltimaAtualizacao$
+} from "src/store/selectors/timeseries.selectors";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -64,7 +67,9 @@ function getColor(d) {
 })
 export class MapComponent
   implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
-  public ultimaAtualizacao$ = this.store.select(selectTimeSeriesUltimaAtualizacao$);
+  public ultimaAtualizacao$ = this.store.select(
+    selectTimeSeriesUltimaAtualizacao$
+  );
   public loading$ = this.store.select(selectTimeSeriesLoading$);
   private mapMode$ = this.store.select(selectRegionsMapMode$);
 
@@ -85,9 +90,8 @@ export class MapComponent
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
     private datePipe: DatePipe,
-    private dialog: MatDialog,
-  ) {
-  }
+    private dialog: MatDialog
+  ) {}
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
     this.subscriptions$ = null;
@@ -178,8 +182,13 @@ export class MapComponent
         this.initMap();
 
         // Correção para exibir no browser android
-        let vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty("--vh", `${vh}px`);
+        const resizeCorrectly = () => {
+          let vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty("--vh", `${vh}px`);
+        };
+
+        resizeCorrectly();
+        window.addEventListener("resize", resizeCorrectly);
       }),
 
       this.store.select(getCurrentRegion$).subscribe(region => {
@@ -331,7 +340,7 @@ export class MapComponent
     }
   }
 
-  private desenharRegiao(regiaoAtual : any, razao: number) {
+  private desenharRegiao(regiaoAtual: any, razao: number) {
     let marker: L.Path;
     if ("latitude" in regiaoAtual.representacao) {
       // cidade
@@ -358,7 +367,8 @@ export class MapComponent
       });
     }
 
-    const ultimoCaso = regiaoAtual?.timeseries[regiaoAtual.timeseries.length - 1];
+    const ultimoCaso =
+      regiaoAtual?.timeseries[regiaoAtual.timeseries.length - 1];
 
     marker.bindTooltip(
       `<h2>${regiaoAtual.nome}</h2>
@@ -373,16 +383,16 @@ export class MapComponent
     return marker;
   }
 
-  public abreAvisoInicial(forcar : boolean) {
+  public abreAvisoInicial(forcar: boolean) {
     const AVISOU_ITEM = "avisou";
 
-    if(!localStorage.getItem(AVISOU_ITEM) || forcar) {
+    if (!localStorage.getItem(AVISOU_ITEM) || forcar) {
       const dialogConfig = new MatDialogConfig();
 
       dialogConfig.disableClose = true;
       dialogConfig.autoFocus = true;
-      dialogConfig.height = '300px';
-      dialogConfig.width = '500px';
+      dialogConfig.height = "300px";
+      dialogConfig.width = "500px";
 
       this.dialog.open(AvisoInicialComponent, dialogConfig);
       localStorage.setItem(AVISOU_ITEM, new Date().toDateString());
