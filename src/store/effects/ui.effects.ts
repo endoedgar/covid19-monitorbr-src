@@ -14,7 +14,6 @@ export class UIEffects {
     ofType(ShowMessage),
     map(action => action.message),
     tap(message => {
-      console.log(message);
       this.snackbar.open(message, "Ok", {
         duration: 5000
       });
