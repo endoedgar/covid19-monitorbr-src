@@ -1,5 +1,6 @@
 {
   "name": "covid19-monitorbr",
+  "description": "Projeto que monitora via mapa interativo a evolução diária da COVID-19 em cada município brasileiro utilizando a API disponibilizada pelo Brasil.IO.",
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
