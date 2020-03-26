@@ -1,59 +1,77 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~leaflet/dist/leaflet.css";
 
-html, body, app-root, app-body { min-width:100%; min-height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-.esri-legend__message { display: none; }
+html,
+body,
+app-root,
+app-body {
+  min-width: 100%;
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+.esri-legend__message {
+  display: none;
+}
 
 .info {
-    padding: 6px 8px;
-    font: 14px/16px Arial, Helvetica, sans-serif;
-    background: white;
-    background: rgba(255,255,255,0.8);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
+  padding: 6px 8px;
+  font: 14px/16px Arial, Helvetica, sans-serif;
+  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
 }
 .info h4 {
-    margin: 0 0 5px;
-    color: #777;
+  margin: 0 0 5px;
+  color: #777;
 }
 
 .legend {
-    line-height: 18px;
-    color: #555;
+  line-height: 18px;
+  color: #555;
 }
 .legend i {
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.7;
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.7;
 }
 
 @media screen and (max-width: 400px) {
-    .mat-column-confirmados, .mat-column-mortes, .mat-column-recuperados, .mat-paginator-range-label {
-      display:none !important;
-    }
-
-    table, .mat-paginator {
-      font-size: 10px !important;
-    }
-
-    .mat-cell, tr, button, .mat-header-cell {
-      font-size: 1em !important;
-    }
-    html {
-        font-size: 10px;
-    }
+  .mat-column-confirmados,
+  .mat-column-mortes,
+  .mat-column-recuperados,
+  .mat-paginator-range-label {
+    display: none !important;
   }
 
-  .middle {
-    z-index: 1200;
-    position: absolute;
-    margin-top: 10px;
-    left: 50%;
+  table,
+  .mat-paginator {
+    font-size: 10px !important;
+  }
+
+  .mat-cell,
+  tr,
+  button,
+  .mat-header-cell {
+    font-size: 1em !important;
+  }
+  html {
+    font-size: 10px;
+  }
+}
+
+.middle {
+  z-index: 1200;
+  position: absolute;
+  margin-top: 10px;
+  left: 50%;
   transform: translate(-50%, 0);
-  }
-  .middle .mat-form-field-flex {
-    background-color: white;
-  }
+}
+.middle .mat-form-field-flex {
+  background-color: white;
+}

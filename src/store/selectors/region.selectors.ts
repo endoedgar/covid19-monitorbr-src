@@ -62,9 +62,9 @@ export const getRegionsWithLatestCases$ = store =>
         const region = regions[timeseries.city_ibge_code];
         if (typeof region != "undefined") {
           if (
-            (currentMode == MapModeEnum.SELECT_CITY &&
+            ([MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_CITY_PER_DAY].includes(currentMode) &&
               region.tipo == RegionTipoEnum.CIDADE) ||
-            (currentMode == MapModeEnum.SELECT_STATE &&
+            ([MapModeEnum.SELECT_STATE, MapModeEnum.SELECT_STATE_PER_DAY].includes(currentMode) &&
               region.tipo == RegionTipoEnum.ESTADO)
           ) {
             if (
@@ -75,8 +75,14 @@ export const getRegionsWithLatestCases$ = store =>
                 timeseries: []
               };
             const rRegion = returnedRegions[timeseries.city_ibge_code];
-            rRegion.confirmed += timeseries.confirmeddiff;
-            rRegion.deaths += timeseries.deathsdiff;
+
+            if([MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(currentMode)) {
+              rRegion.confirmed += timeseries.confirmeddiff;
+              rRegion.deaths += timeseries.deathsdiff;
+            } else {
+              rRegion.confirmed = timeseries.confirmeddiff;
+              rRegion.deaths = timeseries.deathsdiff;
+            }
             rRegion.timeseries.push(timeseries);
           }
         }

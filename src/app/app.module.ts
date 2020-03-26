@@ -10,6 +10,7 @@ import { StorageModule } from "src/store/storage.module";
 import { StoreDevtoolsModule } from "@ngrx/store-devtools";
 import { environment } from "../environments/environment";
 import { HttpClientModule } from "@angular/common/http";
+import { DatePipe } from '@angular/common';
 
 @NgModule({
   declarations: [AppComponent],
@@ -25,7 +26,7 @@ import { HttpClientModule } from "@angular/common/http";
       logOnly: environment.production
     })
   ],
-  providers: [],
+  providers: [DatePipe],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

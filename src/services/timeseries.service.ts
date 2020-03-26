@@ -22,6 +22,8 @@ import {
   delay
 } from "rxjs/operators";
 
+import moment from 'moment';
+
 @Injectable({ providedIn: "root" })
 export class TimeSeriesService {
   private _ultimaAtualizacaoDados: BehaviorSubject<Date>;
@@ -40,7 +42,7 @@ export class TimeSeriesService {
       map((response: any) => response.tables),
       tap(tables => {
         this._ultimaAtualizacaoDados.next(
-          new Date(tables.find(table => table.name == "caso").import_date)
+          new Date(tables.find(table => table.name == "caso").import_date)    
         );
       }),
       switchMap(tables =>
@@ -72,7 +74,7 @@ export class TimeSeriesService {
         city.pipe(
           startWith({ deaths: 0, confirmed: 0 }),
           scan(
-            (acc, value) => {
+            (acc, value:any) => {
               const newValue = { ...value };
               newValue.deaths = Math.max(acc.deaths, value.deaths);
               newValue.confirmed = Math.max(acc.confirmed, value.confirmed);
