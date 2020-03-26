@@ -28,6 +28,7 @@
     "@ngrx/store": "^9.0.0",
     "c": "^0.1.0",
     "chart.js": "^2.9.3",
+    "document-register-element": "^1.14.3",
     "leaflet": "^1.6.0",
     "moment-timezone": "^0.5.28",
     "rxjs": "~6.5.4",
