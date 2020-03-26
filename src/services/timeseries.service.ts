@@ -26,13 +26,13 @@ import moment from 'moment';
 
 @Injectable({ providedIn: "root" })
 export class TimeSeriesService {
-  private _ultimaAtualizacaoDados: BehaviorSubject<Date>;
+  private _ultimaAtualizacaoDados: Date;
 
   constructor(private httpClient: HttpClient) {
-    this._ultimaAtualizacaoDados = new BehaviorSubject<Date>(null);
+    this._ultimaAtualizacaoDados =  null;
   }
 
-  public getUltimaAtualizacao() : BehaviorSubject<Date> {
+  public getUltimaAtualizacao() : Date {
     return this._ultimaAtualizacaoDados;
   }
 
@@ -41,9 +41,7 @@ export class TimeSeriesService {
     const obs$ = getData(url).pipe(
       map((response: any) => response.tables),
       tap(tables => {
-        this._ultimaAtualizacaoDados.next(
-          new Date(tables.find(table => table.name == "caso").import_date)    
-        );
+        this._ultimaAtualizacaoDados = new Date(tables.find(table => table.name == "caso").import_date);
       }),
       switchMap(tables =>
         getData(tables.find(table => table.name == "caso").data_url)
@@ -76,11 +74,14 @@ export class TimeSeriesService {
           scan(
             (acc, value:any) => {
               const newValue = { ...value };
+              if(value.deaths < acc.deaths)
+                console.log(`Mortes diminuiram do dia ${acc.date}: ${acc.deaths} para ${value.date}: ${value.deaths}. (IBGE: ${value.city_ibge_code})`);
               newValue.deaths = Math.max(acc.deaths, value.deaths);
               newValue.confirmed = Math.max(acc.confirmed, value.confirmed);
+              newValue.date = value.date;
               return newValue;
             },
-            { deaths: 0, confirmed: 0 }
+            { deaths: 0, confirmed: 0, date: null, city_ibge_code: null }
           ),
           pairwise(),
           map(pair => {

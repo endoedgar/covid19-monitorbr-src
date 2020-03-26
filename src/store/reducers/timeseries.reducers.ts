@@ -29,7 +29,8 @@ export const reducer = createReducer(
     return timeSeriesAdapter.setAll(action.timeseries, {
       ...state,
       error: null,
-      loading: false
+      loading: false,
+      ultimaAtualizacao: action.lastUpdate
     })
   }
   )

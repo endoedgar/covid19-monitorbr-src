@@ -34,6 +34,7 @@ import { DatePipe } from "@angular/common";
 import moment from "moment-timezone";
 import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
 import { AvisoInicialComponent } from "../aviso-inicial/aviso-inicial.component";
+import { selectTimeSeriesLoading$, selectTimeSeriesUltimaAtualizacao$ } from 'src/store/selectors/timeseries.selectors';
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -63,7 +64,8 @@ function getColor(d) {
 })
 export class MapComponent
   implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
-  private loading$ = this.store.select(selectRegionsLoading$);
+  public ultimaAtualizacao$ = this.store.select(selectTimeSeriesUltimaAtualizacao$);
+  public loading$ = this.store.select(selectTimeSeriesLoading$);
   private mapMode$ = this.store.select(selectRegionsMapMode$);
 
   private map: L.Map;
@@ -76,7 +78,6 @@ export class MapComponent
   public totalConfirmed: number;
   public totalDeath: number;
   public selected = "SELECT_CITY";
-  public ultimaAtualizacao$: Observable<Date>;
   @ViewChild("drawer") public sidenav: MatSidenav;
 
   constructor(
@@ -84,10 +85,8 @@ export class MapComponent
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
     private datePipe: DatePipe,
-    private dialog: MatDialog
+    private dialog: MatDialog,
   ) {
-    this.ultimaAtualizacao$ = timeSeriesService.getUltimaAtualizacao();
-    this.abreAvisoInicial(false);
   }
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
@@ -98,12 +97,17 @@ export class MapComponent
     return this.http.get(jsonURL);
   }
 
-  ngOnInit() {
-    this.store.dispatch(GetRegions());
+  public obterDados() {
     this.store.dispatch(GetTimeSeries());
     this.store.dispatch(ChangeMode({ mode: MapModeEnum.SELECT_CITY }));
+  }
 
+  ngOnInit() {
+    this.store.dispatch(GetRegions());
+    this.abreAvisoInicial(false);
+    this.obterDados();
     moment.tz.setDefault("UTC");
+    this.loading$.subscribe(console.log);
   }
 
   mudancaDeModo(event) {
@@ -337,8 +341,8 @@ export class MapComponent
           regiaoAtual.representacao.longitude
         ],
         {
-          color: getColor(regiaoAtual.confirmed),
-          fillColor: getColor(regiaoAtual.confirmed),
+          color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+          fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
           weight: 0,
           radius: Math.max(5, 50.0 * razao),
           fillOpacity: 0.9
@@ -347,8 +351,8 @@ export class MapComponent
     } else {
       // estado
       marker = L.polygon(regiaoAtual.representacao, {
-        color: getColor(regiaoAtual.confirmed),
-        fillColor: getColor(regiaoAtual.confirmed),
+        color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+        fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
         weight: 3,
         fillOpacity: 0.9
       });
@@ -418,8 +422,8 @@ export class MapComponent
           .on({
             mouseout: ({ target: marker }) => {
               marker.setStyle({
-                color: getColor(regiaoAtual.confirmed),
-                fillColor: getColor(regiaoAtual.confirmed)
+                color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+                fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths)
               });
               bringMarkerToFront(marker);
             },

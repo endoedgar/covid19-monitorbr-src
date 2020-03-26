@@ -15,7 +15,7 @@ export class UIEffects {
     map(action => action.message),
     tap(message => {
       console.log(message);
-      this.snackbar.open(message, "Okay", {
+      this.snackbar.open(message, "Ok", {
         duration: 5000
       });
     })

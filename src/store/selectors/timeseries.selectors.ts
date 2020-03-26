@@ -23,3 +23,8 @@ export const selectTimeSeriesLoading$ = createSelector(
     selectTimeSeriesState$,
     state => state.loading
 );
+
+export const selectTimeSeriesUltimaAtualizacao$ = createSelector(
+    selectTimeSeriesState$,
+    state => state.ultimaAtualizacao
+)

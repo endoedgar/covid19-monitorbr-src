@@ -23,6 +23,8 @@ import { MapComponent } from "./map/map.component";
 import { TimeSeriesEffects } from "src/store/effects/timeseries.effects";
 import { AvisoInicialComponent } from './aviso-inicial/aviso-inicial.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { UIEffects } from 'src/store/effects/ui.effects';
 
 @NgModule({
   declarations: [BodyReduxComponent, RegionListComponent, MapComponent, AvisoInicialComponent],
@@ -30,7 +32,7 @@ import { MatButtonModule } from '@angular/material/button';
     CommonModule,
     StoreModule.forFeature("regions", reducers.regions),
     StoreModule.forFeature("timeseries", reducers.timeseries),
-    EffectsModule.forFeature([RegionsEffects, TimeSeriesEffects]),
+    EffectsModule.forFeature([RegionsEffects, TimeSeriesEffects, UIEffects]),
     RouterModule.forChild([{ path: "", component: BodyReduxComponent }]),
     FormsModule,
     ReactiveFormsModule,
@@ -46,7 +48,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatInputModule,
     MatSidenavModule,
     MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSnackBarModule
   ],
   entryComponents: []
 })

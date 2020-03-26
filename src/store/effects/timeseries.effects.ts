@@ -28,13 +28,25 @@ export class TimeSeriesEffects {
     switchMap(action => {
       return this.timeSeriesService.getCases().pipe(
         map(timeseries => {
-          return GetTimeSeriesSuccess({ timeseries });
+          return GetTimeSeriesSuccess({ timeseries, lastUpdate: this.timeSeriesService.getUltimaAtualizacao() });
         }),
         catchError(err => {
           return of(GetTimeSeriesFailure({ err }));
         })
       );
     })
+  );
+
+  @Effect()
+  showMessageOnSuccess$: Observable<any> = this.actions.pipe(
+    ofType(
+      GetTimeSeriesSuccess
+    ),
+    switchMap(dados => {
+      console.log(dados);
+      return of(ShowMessage({ message: `Carregado! (Última atualização: ${dados.lastUpdate.toLocaleString()})` }))
+    }
+    )
   );
   
   @Effect()

@@ -7,7 +7,7 @@ export const GetTimeSeries = createAction(
 
 export const GetTimeSeriesSuccess = createAction(
   "[TIMESERIES] GetTimeseries Success",
-  props<{ timeseries: TimeSeries[] }>()
+  props<{ timeseries: TimeSeries[], lastUpdate: Date }>()
 );
 
 export const GetTimeSeriesFailure = createAction(

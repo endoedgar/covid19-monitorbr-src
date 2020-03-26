@@ -30,16 +30,30 @@
       <div class="leaflet-control-container">
         <div class="leaflet-top leaflet-right">
           <div class="leaflet-bar leaflet-control">
-            <a href="#" (click)="drawer.toggle()">
-              <div
-                style="-webkit-transform: rotate(45deg); 
-               -moz-transform: rotate(45deg); 
-                 -o-transform: rotate(45deg);
-                    transform: rotate(45deg);"
-              >
-                &#9906;
-              </div>
+            <a
+              href="#"
+              (click)="drawer.toggle()"
+              role="button"
+              aria-label="Search"
+            >
+              <i class="material-icons" style="line-height: 30px;">search</i>
             </a>
+              <a
+                *ngIf="!(loading$ | async)"
+                href="#"
+                (click)="obterDados()"
+                role="button"
+                aria-label="Refresh"
+              >
+                <i class="material-icons" style="line-height: 30px;">refresh</i>
+              </a>
+              <a
+                *ngIf="(loading$ | async)"
+                href="#"
+                role="button"
+              >
+                ...
+              </a>
           </div>
         </div>
       </div>

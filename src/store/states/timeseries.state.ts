@@ -4,6 +4,7 @@ import { TimeSeries } from 'src/models/TimeSeries';
 export interface TimeSeriesState extends EntityState<TimeSeries> {
   loading : boolean;
   error : any;
+  ultimaAtualizacao: Date;
 }
 
 export const timeSeriesAdapter: EntityAdapter<TimeSeries> = createEntityAdapter<TimeSeries>({
@@ -12,5 +13,6 @@ export const timeSeriesAdapter: EntityAdapter<TimeSeries> = createEntityAdapter<
 
 export const initialTimeSeriesState: TimeSeriesState = timeSeriesAdapter.getInitialState({
   loading: false,
-  error: null
+  error: null,
+  ultimaAtualizacao: null
 });
