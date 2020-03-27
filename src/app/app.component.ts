@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,8 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'covid19brasilmap';
+
+  constructor(private translate: TranslateService) {
+    translate.setDefaultLang(navigator.language.match(/^pt/) ? "pt-BR" : 'en');
+  }
 }

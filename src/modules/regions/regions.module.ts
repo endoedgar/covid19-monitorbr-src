@@ -25,6 +25,9 @@ import { AvisoInicialComponent } from './aviso-inicial/aviso-inicial.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { UIEffects } from 'src/store/effects/ui.effects';
+import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
+import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
 
 @NgModule({
   declarations: [BodyReduxComponent, RegionListComponent, MapComponent, AvisoInicialComponent],
@@ -49,10 +52,21 @@ import { UIEffects } from 'src/store/effects/ui.effects';
     MatSidenavModule,
     MatSelectModule,
     MatButtonModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    TranslateModule.forChild({
+      loader: {
+          provide: TranslateLoader,
+          useFactory: HttpLoaderFactory,
+          deps: [HttpClient]
+      }
+    })
   ],
   entryComponents: []
 })
 export class RegionsModule {
   constructor() {}
+}
+
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http);
 }

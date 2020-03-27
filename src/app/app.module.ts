@@ -9,8 +9,10 @@ import { StoreModule } from "@ngrx/store";
 import { StorageModule } from "src/store/storage.module";
 import { StoreDevtoolsModule } from "@ngrx/store-devtools";
 import { environment } from "../environments/environment";
-import { HttpClientModule } from "@angular/common/http";
 import { DatePipe } from '@angular/common';
+import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
+import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+import {HttpClient, HttpClientModule} from '@angular/common/http';
 
 @NgModule({
   declarations: [AppComponent],
@@ -21,6 +23,13 @@ import { DatePipe } from '@angular/common';
     EffectsModule.forRoot([]),
     StorageModule,
     HttpClientModule,
+    TranslateModule.forRoot({
+      loader: {
+          provide: TranslateLoader,
+          useFactory: HttpLoaderFactory,
+          deps: [HttpClient]
+      }
+  }),
     StoreDevtoolsModule.instrument({
       maxAge: 25,
       logOnly: environment.production
@@ -30,3 +39,7 @@ import { DatePipe } from '@angular/common';
   bootstrap: [AppComponent]
 })
 export class AppModule {}
+
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http);
+}

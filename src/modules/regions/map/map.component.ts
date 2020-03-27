@@ -4,7 +4,9 @@ import {
   OnInit,
   ViewChild,
   AfterContentInit,
-  OnDestroy
+  OnDestroy,
+  ElementRef,
+  ChangeDetectorRef
 } from "@angular/core";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
@@ -38,6 +40,7 @@ import {
   selectTimeSeriesLoading$,
   selectTimeSeriesUltimaAtualizacao$
 } from "src/store/selectors/timeseries.selectors";
+import { TranslateService } from "@ngx-translate/core";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -90,11 +93,19 @@ export class MapComponent
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
     private datePipe: DatePipe,
-    private dialog: MatDialog
+    private translate: TranslateService,
+    private dialog: MatDialog,
+    private elRef:ElementRef,
+    private cdRef:ChangeDetectorRef
   ) {}
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
     this.subscriptions$ = null;
+  }
+
+  useLanguage(language: string) {
+    this.translate.use(language);
+    this.obterDados();
   }
 
   public getJSON(jsonURL): Observable<any> {
@@ -200,26 +211,27 @@ export class MapComponent
         }
       })
     ];
+
   }
 
   // TODO usar componente do Angular em vez de montar um em HTML
   async mostraPopup(layer: L.Path, regiao) {
     this.sidenav.close();
-    let popupContent = `<h1>${regiao.nome}</h1>
-      Confirmados: <b>0</b>
-      `;
+    let popupContent = this.translate.instant("map.simplePopup", {
+      regionName: regiao.nome
+    });
 
     const divCanvasId = `chart${Math.random()}`;
     if (regiao?.timeseries) {
       const ultimoCaso = regiao.timeseries[regiao.timeseries.length - 1];
 
-      popupContent = `<h1>${regiao.nome}</h1>
-      Confirmados: <b>${regiao.confirmed}</b><br/>
-      Mortes: <b style='color: red;'>${regiao.deaths}</b><br/>
-      <div style='margin-left:10px;'><canvas style='clear:both; 
-      position: relative;' id='${divCanvasId}'></canvas>Última atualização: <b style="color: red">${this.datePipe.transform(
-        ultimoCaso.date
-      )}</b></div>`;
+      popupContent = this.translate.instant("map.completePopup", {
+        regionName: regiao.nome,
+        regionConfirmed: regiao.confirmed,
+        regionDeaths: regiao.deaths,
+        divCanvasId,
+        lastUpdate: this.datePipe.transform(ultimoCaso.date)
+      });
     }
 
     layer
@@ -308,11 +320,11 @@ export class MapComponent
             data: {
               datasets: [
                 {
-                  label: "Confirmados",
+                  label: this.translate.instant("regionlist.confirmed"),
                   data: confirmedSum
                 },
                 {
-                  label: "Mortes",
+                  label: this.translate.instant("regionlist.deaths"),
                   data: deathsSum,
                   backgroundColor: "#FF9999"
                 }
@@ -370,14 +382,13 @@ export class MapComponent
     const ultimoCaso =
       regiaoAtual?.timeseries[regiaoAtual.timeseries.length - 1];
 
-    marker.bindTooltip(
-      `<h2>${regiaoAtual.nome}</h2>
-      Confirmados: ${regiaoAtual.confirmed}<br/>
-      Mortos: ${regiaoAtual.deaths}<br/>
-      Última atualização: <b style="color: red">${this.datePipe.transform(
-        ultimoCaso?.date
-      )}</b>
-      `
+    marker.unbindTooltip().bindTooltip(
+      this.translate.instant("map.tooltip", {
+        regionName: regiaoAtual.nome,
+        regionConfirmed: regiaoAtual.confirmed,
+        regionDeaths: regiaoAtual.deaths,
+        lastUpdate: this.datePipe.transform(ultimoCaso?.date)
+      })
     );
 
     return marker;

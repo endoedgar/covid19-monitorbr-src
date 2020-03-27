@@ -6,23 +6,19 @@
     <div id="map">
       <div class="middle">
         <mat-form-field>
-          <mat-label>Mapa</mat-label>
+          <mat-label [innerHTML]="'map.maplabel' | translate" ></mat-label>
           <mat-select
             [(value)]="selected"
             (selectionChange)="mudancaDeModo($event)"
             value=""
           >
-            <mat-option value="SELECT_CITY">
-              Municipal / Total
+            <mat-option [innerHTML]="'map.citytotal' | translate" value="SELECT_CITY">
             </mat-option>
-            <mat-option value="SELECT_STATE">
-              Estadual / Total
+            <mat-option [innerHTML]="'map.statetotal' | translate" value="SELECT_STATE">
             </mat-option>
-            <mat-option value="SELECT_CITY_PER_DAY">
-              Municipal / Dia
+            <mat-option [innerHTML]="'map.citydaily' | translate" value="SELECT_CITY_PER_DAY">
             </mat-option>
-            <mat-option value="SELECT_STATE_PER_DAY">
-              Estadual / Dia
+            <mat-option [innerHTML]="'map.statetotal' | translate" value="SELECT_STATE_PER_DAY">
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -60,18 +56,9 @@
       <div class="leaflet-control-container">
         <div class="leaflet-bottom leaflet-left">
           <div class="leaflet-control info legend leaflet-control">
-            Monitor COVID-19 - Brasil<br />
-            Confirmados: {{ totalConfirmed }} Mortes:
-            <b style="color: red">{{ totalDeath }} </b>
-            <a href="#" (click)="abreAvisoInicial(true)">(obs)</a><br />
-            Última atualização: {{ ultimaAtualizacao$ | async | date }}<br />
-            Fonte:
-            <a href="https://github.com/turicas/covid19-br"
-              >Secretarias de Saúde<br />das Unidades Federativas, dados<br />tratados
-              por Álvaro Justen/Brasil.IO</a
-            ><br />
-            Desenvolvido por
-            <a href="https://github.com/endoedgar">Edgar Endo Junior</a>
+            <div [innerHTML]="'map.info' | translate: {totalConfirmed: totalConfirmed, totalDeath: totalDeath, ultimaAtualizacao$: ultimaAtualizacao$ | async | date}"></div>
+            Language: <a href="#" (click)="useLanguage('en')">en</a> / 
+            <a href="#" (click)="useLanguage('pt-BR')">pt</a>
           </div>
         </div>
       </div>

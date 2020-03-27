@@ -14,12 +14,14 @@ import {
   GetTimeSeriesFailure,
 } from "../actions/timeseries.actions";
 import { ShowMessage } from "../actions/ui.actions";
+import {TranslateService} from '@ngx-translate/core';
 
 @Injectable()
 export class TimeSeriesEffects {
   constructor(
     private actions: Actions,
-    private timeSeriesService: TimeSeriesService
+    private timeSeriesService: TimeSeriesService,
+    private translate: TranslateService
   ) {}
 
   @Effect()
@@ -43,8 +45,7 @@ export class TimeSeriesEffects {
       GetTimeSeriesSuccess
     ),
     switchMap(dados => {
-      console.log(dados);
-      return of(ShowMessage({ message: `Carregado! (Última atualização: ${dados.lastUpdate.toLocaleString()})` }))
+      return of(ShowMessage({ message: this.translate.instant("map.dataLoaded", { lastUpdate: dados.lastUpdate.toLocaleString() }) }))
     }
     )
   );
