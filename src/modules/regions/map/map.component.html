@@ -6,19 +6,17 @@
     <div id="map">
       <div class="middle">
         <mat-form-field>
-          <mat-label [innerHTML]="'map.maplabel' | translate" ></mat-label>
+          <mat-label [innerHTML]="'map.maplabel' | translate"></mat-label>
           <mat-select
-            [(value)]="selected"
+            [(value)]="mapMode"
             (selectionChange)="mudancaDeModo($event)"
             value=""
           >
-            <mat-option [innerHTML]="'map.citytotal' | translate" value="SELECT_CITY">
-            </mat-option>
-            <mat-option [innerHTML]="'map.statetotal' | translate" value="SELECT_STATE">
-            </mat-option>
-            <mat-option [innerHTML]="'map.citydaily' | translate" value="SELECT_CITY_PER_DAY">
-            </mat-option>
-            <mat-option [innerHTML]="'map.statetotal' | translate" value="SELECT_STATE_PER_DAY">
+            <mat-option
+              *ngFor="let mode of objectKeys(modesMapped)"
+              [value]="mode"
+            >
+              {{ modesMapped[mode] | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -34,31 +32,57 @@
             >
               <i class="material-icons" style="line-height: 30px;">search</i>
             </a>
-              <a
-                *ngIf="!(loading$ | async)"
-                href="#"
-                (click)="obterDados()"
-                role="button"
-                aria-label="Refresh"
-              >
-                <i class="material-icons" style="line-height: 30px;">refresh</i>
-              </a>
-              <a
-                *ngIf="(loading$ | async)"
-                href="#"
-                role="button"
-              >
+            <a
+              *ngIf="!(loading$ | async); else loadingIcon"
+              href="#"
+              (click)="obterDados()"
+              role="button"
+              aria-label="Refresh"
+            >
+              <i class="material-icons" style="line-height: 30px;">refresh</i>
+            </a>
+            <ng-template #loadingIcon>
+              <a href="#" role="button">
                 ...
               </a>
+            </ng-template>
           </div>
         </div>
       </div>
       <div class="leaflet-control-container">
         <div class="leaflet-bottom leaflet-left">
           <div class="leaflet-control info legend leaflet-control">
-            <div [innerHTML]="'map.info' | translate: {totalConfirmed: totalConfirmed, totalDeath: totalDeath, ultimaAtualizacao$: ultimaAtualizacao$ | async | date}"></div>
-            Language: <a href="#" (click)="useLanguage('en')">en</a> / 
-            <a href="#" (click)="useLanguage('pt-BR')">pt</a>
+            <span>{{ "map.title" | translate }}</span
+            ><br />
+            <span
+              [innerHTML]="
+                'map.aftertitle'
+                  | translate
+                    : { totalConfirmed: totalConfirmed, totalDeath: totalDeath }
+              "
+            ></span>
+            <span
+              ><a
+                href="#"
+                (click)="$event.preventDefault(); abreAvisoInicial(true)"
+                >(obs)</a
+              ></span
+            ><br />
+            <span>{{
+              "map.lastUpdated"
+                | translate
+                  : { ultimaAtualizacao$: ultimaAtualizacao$ | async | date }
+            }}</span
+            ><br />
+            <div [innerHTML]="'map.info' | translate"></div>
+            Language:
+            <span *ngIf="!(loading$ | async); else loadSpan"
+              ><a href="#" (click)="useLanguage('en')">en</a> /
+              <a href="#" (click)="useLanguage('pt-BR')">pt</a></span
+            >
+            <ng-template #loadSpan>
+              <span>...</span>
+            </ng-template>
           </div>
         </div>
       </div>

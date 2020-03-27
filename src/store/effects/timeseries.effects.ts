@@ -1,20 +1,16 @@
 import { Injectable } from "@angular/core";
 import { Actions, Effect, ofType } from "@ngrx/effects";
-import {
-  map,
-  switchMap,
-  catchError,
-} from "rxjs/operators";
+import { map, switchMap, catchError } from "rxjs/operators";
 
 import { TimeSeriesService } from "../../services/timeseries.service";
 import { Observable, of } from "rxjs";
 import {
   GetTimeSeries,
   GetTimeSeriesSuccess,
-  GetTimeSeriesFailure,
+  GetTimeSeriesFailure
 } from "../actions/timeseries.actions";
 import { ShowMessage } from "../actions/ui.actions";
-import {TranslateService} from '@ngx-translate/core';
+import { TranslateService } from "@ngx-translate/core";
 
 @Injectable()
 export class TimeSeriesEffects {
@@ -30,7 +26,10 @@ export class TimeSeriesEffects {
     switchMap(action => {
       return this.timeSeriesService.getCases().pipe(
         map(timeseries => {
-          return GetTimeSeriesSuccess({ timeseries, lastUpdate: this.timeSeriesService.getUltimaAtualizacao() });
+          return GetTimeSeriesSuccess({
+            timeseries,
+            lastUpdate: this.timeSeriesService.getUltimaAtualizacao()
+          });
         }),
         catchError(err => {
           return of(GetTimeSeriesFailure({ err }));
@@ -41,20 +40,21 @@ export class TimeSeriesEffects {
 
   @Effect()
   showMessageOnSuccess$: Observable<any> = this.actions.pipe(
-    ofType(
-      GetTimeSeriesSuccess
-    ),
+    ofType(GetTimeSeriesSuccess),
     switchMap(dados => {
-      return of(ShowMessage({ message: this.translate.instant("map.dataLoaded", { lastUpdate: dados.lastUpdate.toLocaleString() }) }))
-    }
-    )
+      return of(
+        ShowMessage({
+          message: this.translate.instant("map.dataLoaded", {
+            lastUpdate: dados.lastUpdate.toLocaleString()
+          })
+        })
+      );
+    })
   );
-  
+
   @Effect()
   showMessageOnFailures$: Observable<any> = this.actions.pipe(
-    ofType(
-      GetTimeSeriesFailure
-    ),
+    ofType(GetTimeSeriesFailure),
     map(action => action.err),
     switchMap(err =>
       of(ShowMessage({ message: err.error.message || err.message }))

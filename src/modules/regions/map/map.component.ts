@@ -31,7 +31,10 @@ import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { scan, toArray } from "rxjs/operators";
 import Chart from "chart.js";
 import { MatSidenav } from "@angular/material/sidenav";
-import { MapModeEnum } from "src/store/states/region.state";
+import {
+  MapModeEnum,
+  MapModeEnum2LabelMapping
+} from "src/store/states/region.state";
 import { DatePipe } from "@angular/common";
 import moment from "moment-timezone";
 import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
@@ -70,6 +73,7 @@ function getColor(d) {
 })
 export class MapComponent
   implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
+  objectKeys = Object.keys;
   public ultimaAtualizacao$ = this.store.select(
     selectTimeSeriesUltimaAtualizacao$
   );
@@ -78,14 +82,14 @@ export class MapComponent
 
   private map: L.Map;
   private subscriptions$: Subscription[];
-  private mapMode: MapModeEnum;
+  public mapMode: MapModeEnum;
 
   private markersRegioes: L.Path[];
   private regioes: Region[];
 
   public totalConfirmed: number;
   public totalDeath: number;
-  public selected = "SELECT_CITY";
+  public modesMapped = MapModeEnum2LabelMapping;
   @ViewChild("drawer") public sidenav: MatSidenav;
 
   constructor(
@@ -95,8 +99,8 @@ export class MapComponent
     private datePipe: DatePipe,
     private translate: TranslateService,
     private dialog: MatDialog,
-    private elRef:ElementRef,
-    private cdRef:ChangeDetectorRef
+    private elRef: ElementRef,
+    private cdRef: ChangeDetectorRef
   ) {}
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
@@ -122,7 +126,7 @@ export class MapComponent
     this.abreAvisoInicial(false);
     this.obterDados();
     moment.tz.setDefault("UTC");
-    this.loading$.subscribe(console.log);
+    console.log(this.modesMapped);
   }
 
   mudancaDeModo(event) {
@@ -175,7 +179,9 @@ export class MapComponent
 
   ngAfterContentInit(): void {
     this.subscriptions$ = [
-      this.mapMode$.subscribe(mapMode => (this.mapMode = mapMode)),
+      this.mapMode$.subscribe(mapMode => {
+        this.mapMode = mapMode
+      }),
       // desenhar fronteiras do brasil
       this.getJSON("assets/data/brazil.json").subscribe(brasil => {
         L.geoJSON(brasil, {
@@ -211,7 +217,6 @@ export class MapComponent
         }
       })
     ];
-
   }
 
   // TODO usar componente do Angular em vez de montar um em HTML
