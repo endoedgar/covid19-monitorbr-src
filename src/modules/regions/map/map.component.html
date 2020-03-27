@@ -6,7 +6,7 @@
     <div id="map">
       <div class="middle">
         <mat-form-field>
-          <mat-label [innerHTML]="'map.maplabel' | translate"></mat-label>
+          <mat-label>{{ 'map.maplabel' | translate }}</mat-label>
           <mat-select
             [(value)]="mapMode"
             (selectionChange)="mudancaDeModo($event)"
@@ -16,7 +16,7 @@
               *ngFor="let mode of objectKeys(modesMapped)"
               [value]="mode"
             >
-              {{ modesMapped[mode] | translate }}
+            {{ modesMapped[mode] | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>

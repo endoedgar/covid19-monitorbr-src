@@ -9,10 +9,10 @@ export enum MapModeEnum {
 };
 
 export const MapModeEnum2LabelMapping: Record<MapModeEnum, string> = {
-  [MapModeEnum.SELECT_CITY]: "Municipal / Total",
-  [MapModeEnum.SELECT_STATE]: "Estadual / Total",
-  [MapModeEnum.SELECT_CITY_PER_DAY]: "Municipal / Dia",
-  [MapModeEnum.SELECT_STATE_PER_DAY]: "Estadual / Dia",
+  [MapModeEnum.SELECT_CITY]: "map.citytotal",
+  [MapModeEnum.SELECT_STATE]: "map.statetotal",
+  [MapModeEnum.SELECT_CITY_PER_DAY]: "map.citydaily",
+  [MapModeEnum.SELECT_STATE_PER_DAY]: "map.statedaily",
 };
 
 export interface RegionState extends EntityState<Region> {

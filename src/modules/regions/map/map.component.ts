@@ -86,6 +86,7 @@ export class MapComponent
 
   private markersRegioes: L.Path[];
   private regioes: Region[];
+  public options = [];
 
   public totalConfirmed: number;
   public totalDeath: number;
@@ -97,7 +98,7 @@ export class MapComponent
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
     private datePipe: DatePipe,
-    private translate: TranslateService,
+    public translate: TranslateService,
     private dialog: MatDialog,
     private elRef: ElementRef,
     private cdRef: ChangeDetectorRef
@@ -126,7 +127,10 @@ export class MapComponent
     this.abreAvisoInicial(false);
     this.obterDados();
     moment.tz.setDefault("UTC");
-    console.log(this.modesMapped);
+
+    this.translate.onLangChange.subscribe(c =>{
+      this.translate.get("map.title").subscribe(console.log);
+    });
   }
 
   mudancaDeModo(event) {
