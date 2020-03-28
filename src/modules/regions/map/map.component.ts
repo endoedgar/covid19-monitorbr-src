@@ -114,7 +114,6 @@ export class MapComponent
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) => moment(firstDay).add((vetSize-1)-i, "days").startOf('day'));
-    console.log(this.availableDates[0].format('LL'));
     this.store.dispatch(SetDate({date: this.availableDates[0]}))
   }
   ngOnDestroy(): void {
@@ -216,8 +215,6 @@ export class MapComponent
       }),
 
       getRegionsWithLatestCases$(this.store).subscribe((regioes: Region[]) => {
-        console.log("Recarregando");
-
         this.regioes = regioes;
         this.initMap();
 

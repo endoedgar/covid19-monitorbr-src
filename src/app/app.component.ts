@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
+import moment from "moment-timezone"
 
 @Component({
   selector: 'app-root',
@@ -11,5 +12,6 @@ export class AppComponent {
 
   constructor(private translate: TranslateService) {
     translate.setDefaultLang(navigator.language.match(/^pt/) ? "pt-BR" : 'en');
+    moment.locale(navigator.language);
   }
 }
