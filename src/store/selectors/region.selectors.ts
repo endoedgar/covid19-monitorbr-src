@@ -69,9 +69,15 @@ export const getRegionsWithLatestCases$ = store =>
         const region = regions[timeseries.city_ibge_code];
         if (typeof region != "undefined" && new Date(timeseries.date) < date) {
           if (
-            ([MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_CITY_PER_DAY].includes(currentMode) &&
+            ([
+              MapModeEnum.SELECT_CITY,
+              MapModeEnum.SELECT_CITY_PER_DAY
+            ].includes(currentMode) &&
               region.tipo == RegionTipoEnum.CIDADE) ||
-            ([MapModeEnum.SELECT_STATE, MapModeEnum.SELECT_STATE_PER_DAY].includes(currentMode) &&
+            ([
+              MapModeEnum.SELECT_STATE,
+              MapModeEnum.SELECT_STATE_PER_DAY
+            ].includes(currentMode) &&
               region.tipo == RegionTipoEnum.ESTADO)
           ) {
             if (
@@ -83,7 +89,11 @@ export const getRegionsWithLatestCases$ = store =>
               };
             const rRegion = returnedRegions[timeseries.city_ibge_code];
 
-            if([MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(currentMode)) {
+            if (
+              [MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(
+                currentMode
+              )
+            ) {
               rRegion.confirmed += timeseries.confirmeddiff;
               rRegion.deaths += timeseries.deathsdiff;
             } else {
@@ -96,5 +106,46 @@ export const getRegionsWithLatestCases$ = store =>
       });
 
       return returnedRegions;
+    }
+  );
+
+export const getRegionWithLatestCases$ = store =>
+  combineLatest(
+    store.select(getCurrentRegion$),
+    store.select(selectAllTimeSeries$),
+    store.select(selectRegionsMapMode$),
+    store.select(selectRegionsDate$),
+    (
+      region: Region,
+      allTimeSeries: TimeSeries[],
+      currentMode: MapModeEnum,
+      date: Date
+    ) => {
+      if(!region)
+        return {}
+      let returnedRegion = {
+        ...region,
+        timeseries: []
+      };
+      allTimeSeries
+        .filter(timeSeries => timeSeries.city_ibge_code == region.codigo_ibge)
+        .forEach(timeseries => {
+          if (new Date(timeseries.date) < date) {
+            if (
+              [MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(
+                currentMode
+              )
+            ) {
+              returnedRegion.confirmed += timeseries.confirmeddiff;
+              returnedRegion.deaths += timeseries.deathsdiff;
+            } else {
+              returnedRegion.confirmed = timeseries.confirmeddiff;
+              returnedRegion.deaths = timeseries.deathsdiff;
+            }
+            returnedRegion.timeseries.push(timeseries);
+          }
+        });
+
+      return returnedRegion;
     }
   );
