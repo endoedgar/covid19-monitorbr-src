@@ -29,13 +29,15 @@ import { UIEffects } from "src/store/effects/ui.effects";
 import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
 import { HttpClient } from "@angular/common/http";
+import { PopupChartComponent } from './popup-chart/popup-chart.component';
 
 @NgModule({
   declarations: [
     BodyReduxComponent,
     RegionListComponent,
     MapComponent,
-    AvisoInicialComponent
+    AvisoInicialComponent,
+    PopupChartComponent
   ],
   imports: [
     CommonModule,

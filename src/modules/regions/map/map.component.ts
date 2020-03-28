@@ -6,7 +6,10 @@ import {
   AfterContentInit,
   OnDestroy,
   ElementRef,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  ComponentFactoryResolver,
+  Injector,
+  ComponentRef
 } from "@angular/core";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
@@ -31,7 +34,6 @@ import {
 } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { scan, toArray } from "rxjs/operators";
-import Chart from "chart.js";
 import { MatSidenav } from "@angular/material/sidenav";
 import {
   MapModeEnum,
@@ -45,6 +47,7 @@ import {
   selectTimeSeriesUltimaAtualizacao$
 } from "src/store/selectors/timeseries.selectors";
 import { TranslateService } from "@ngx-translate/core";
+import { PopupChartComponent } from "../popup-chart/popup-chart.component";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -80,14 +83,13 @@ export class MapComponent
   );
   public ultimaAtualizacao;
   public loading$ = this.store.select(selectTimeSeriesLoading$);
-  private mapMode$ = this.store.select(selectRegionsMapMode$);
   private mapDate$ = this.store.select(selectRegionsDate$);
+  public mapMode: MapModeEnum;
 
   private map: L.Map;
   private subscriptions$: Subscription[];
-  public mapMode: MapModeEnum;
 
-  private markersRegioes: L.Path[];
+  private markersRegioes: L.Path[] = [];
   private regioes: Region[];
   public options = [];
 
@@ -97,6 +99,7 @@ export class MapComponent
   public availableDates = [];
   public mapDate: moment.Moment;
   public objectIsExtensible = Object.isExtensible;
+  public popupComponent: ComponentRef<PopupChartComponent>;
   @ViewChild("drawer") public sidenav: MatSidenav;
 
   constructor(
@@ -106,14 +109,20 @@ export class MapComponent
     public translate: TranslateService,
     private dialog: MatDialog,
     private elRef: ElementRef,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private resolver: ComponentFactoryResolver,
+    private injector: Injector
   ) {
-    const firstDay = moment("2020-02-26").startOf('day');
-    const vetSize = moment().diff(firstDay, "days")+1;
+    const firstDay = moment("2020-02-26").startOf("day");
+    const vetSize = moment().diff(firstDay, "days") + 1;
     this.availableDates = Array(vetSize)
       .fill(0)
-      .map((x, i) => moment(firstDay).add((vetSize-1)-i, "days").startOf('day'));
-    this.store.dispatch(SetDate({date: this.availableDates[0]}))
+      .map((x, i) =>
+        moment(firstDay)
+          .add(vetSize - 1 - i, "days")
+          .startOf("day")
+      );
+    this.store.dispatch(SetDate({ date: this.availableDates[0] }));
   }
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
@@ -175,8 +184,8 @@ export class MapComponent
   ngAfterViewInit(): void {
     this.map = L.map("map", {
       center: [-13.5748266, -49.6352299],
-      zoom: 4,
-      preferCanvas: true
+      zoom: 4
+      //preferCanvas: true
     });
 
     this.addLegenda();
@@ -195,14 +204,17 @@ export class MapComponent
 
   ngAfterContentInit(): void {
     this.subscriptions$ = [
+      this.store.select(selectRegionsMapMode$).subscribe(mapMode => {
+        this.mapMode = mapMode;
+      }),
       this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
-        this.ultimaAtualizacao = (ultimaAtualizacao instanceof Date) ? moment(ultimaAtualizacao).format("LL") : "...";
+        this.ultimaAtualizacao =
+          ultimaAtualizacao instanceof Date
+            ? moment(ultimaAtualizacao).format("LL")
+            : "...";
       }),
       this.mapDate$.subscribe(mapDate => {
         this.mapDate = mapDate;
-      }),
-      this.mapMode$.subscribe(mapMode => {
-        this.mapMode = mapMode;
       }),
       // desenhar fronteiras do brasil
       this.getJSON("assets/data/brazil.json").subscribe(brasil => {
@@ -219,204 +231,89 @@ export class MapComponent
       getRegionsWithLatestCases$(this.store).subscribe((regioes: Region[]) => {
         this.regioes = regioes;
         this.initMap();
-
-        // Correção para exibir no browser android
-        const resizeCorrectly = () => {
-          let vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty("--vh", `${vh}px`);
-        };
-
-        resizeCorrectly();
-        window.addEventListener("resize", resizeCorrectly);
       }),
 
       this.store.select(getCurrentRegion$).subscribe(region => {
         if (region != null) {
           const marker = this.markersRegioes[region?.codigo_ibge];
           if (marker != null) {
-            this.mostraPopup(marker, this.regioes[region.codigo_ibge]);
+            this.mostraPopup(marker);
           }
         }
       })
     ];
+
+    // Correção para exibir no browser android
+    const resizeCorrectly = () => {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    resizeCorrectly();
+    window.addEventListener("resize", resizeCorrectly);
   }
 
-  // TODO usar componente do Angular em vez de montar um em HTML
-  async mostraPopup(layer: L.Path, regiao) {
+  async mostraPopup(layer: L.Path) {
     this.sidenav.close();
-    let popupContent = this.translate.instant("map.simplePopup", {
-      regionName: regiao.nome
-    });
 
-    const divCanvasId = `chart${Math.random()}`;
-    if (regiao?.timeseries) {
-      const ultimoCaso = regiao.timeseries[regiao.timeseries.length - 1];
+    if (this.popupComponent) this.popupComponent.destroy();
 
-      popupContent = this.translate.instant("map.completePopup", {
-        regionName: regiao.nome,
-        regionConfirmed: regiao.confirmed,
-        regionDeaths: regiao.deaths,
-        divCanvasId,
-        lastUpdate: moment(ultimoCaso.date).format("LL")
-      });
-    }
+    this.popupComponent = this.resolver
+      .resolveComponentFactory(PopupChartComponent)
+      .create(this.injector);
 
     layer
       .unbindPopup()
-      .bindPopup(popupContent, { autoPan: true })
+      .bindPopup(this.popupComponent.location.nativeElement, { autoPan: true })
       .openPopup();
 
-    const canvas = <HTMLCanvasElement>document.getElementById(divCanvasId);
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-
-      const validDates = regiao.timeseries
-        .filter(timeseries => Date.parse(timeseries.date))
-        .map(timeseries => ({
-          ...timeseries,
-          date: new Date(Date.parse(timeseries.date))
-        }));
-
-      const dias = validDates.map(timeseries => ({
-        x: timeseries.date,
-        confirmeddiff: timeseries.confirmeddiff,
-        deathsdiff: timeseries.deathsdiff
-      }));
-
-      type dia_data = {
-        x: Date;
-        confirmeddiff: number;
-        deathsdiff: number;
-        confirmedsum: number;
-        deathssum: number;
-      };
-      from(dias)
-        .pipe(
-          scan(
-            (acc: dia_data, value: dia_data) => {
-              const dados = {
-                x: value.x,
-                confirmeddiff: value.confirmeddiff,
-                deathsdiff: value.deathsdiff
-              };
-
-              return ![
-                MapModeEnum.SELECT_CITY_PER_DAY,
-                MapModeEnum.SELECT_STATE_PER_DAY
-              ].includes(this.mapMode)
-                ? {
-                    ...dados,
-                    confirmedsum: acc.confirmedsum + value.confirmeddiff,
-                    deathssum: acc.deathssum + value.deathsdiff
-                  }
-                : {
-                    ...dados,
-                    confirmedsum: value.confirmeddiff,
-                    deathssum: value.deathsdiff
-                  };
-            },
-            {
-              x: null,
-              confirmeddiff: 0,
-              deathsdiff: 0,
-              confirmedsum: 0,
-              deathssum: 0
-            }
-          ),
-          toArray()
-        )
-        .subscribe(dadosGerais => {
-          const confirmed = [];
-          const confirmedSum = [];
-          const deaths = [];
-          const deathsSum = [];
-
-          dadosGerais.forEach(dadoGeral => {
-            function s(dados) {
-              return { x: dadoGeral.x, y: dados };
-            }
-
-            confirmed.push(s(dadoGeral.confirmeddiff));
-            confirmedSum.push(s(dadoGeral.confirmedsum));
-            deaths.push(s(dadoGeral.deathsdiff));
-            deathsSum.push(s(dadoGeral.deathssum));
-          });
-
-          let myChart = new Chart(ctx, {
-            type: "line",
-            data: {
-              datasets: [
-                {
-                  label: this.translate.instant("regionlist.confirmed"),
-                  data: confirmedSum
-                },
-                {
-                  label: this.translate.instant("regionlist.deaths"),
-                  data: deathsSum,
-                  backgroundColor: "#FF9999"
-                }
-              ]
-            },
-            options: {
-              scales: {
-                xAxes: [
-                  {
-                    type: "time",
-                    time: {
-                      minUnit: "day",
-                      tooltipFormat: "L",
-                      displayFormats: {
-                        quarter: "D MMM"
-                      }
-                    }
-                  }
-                ]
-              },
-              responsive: true
-            }
-          });
-        });
-    }
+    this.popupComponent.changeDetectorRef.detectChanges();
   }
 
   private desenharRegiao(regiaoAtual: any, razao: number) {
-    let marker: L.Path;
+    let marker: L.Path = this.markersRegioes[regiaoAtual.codigo_ibge];
+
     if ("latitude" in regiaoAtual.representacao) {
       // cidade
-      marker = L.circleMarker(
-        [
-          regiaoAtual.representacao.latitude,
-          regiaoAtual.representacao.longitude
-        ],
-        {
-          color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
-          fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
-          weight: 0,
-          radius: Math.max(5, 50.0 * razao),
-          fillOpacity: 0.9
-        }
-      );
+      const circle = <L.CircleMarker>marker;
+
+      const estilo: L.CircleMarkerOptions = {
+        color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+        fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+        weight: 0,
+        radius: Math.max(5, 50.0 * razao),
+        fillOpacity: 0.9,
+        className: "pulse"
+      };
+
+      if (!circle) {
+        marker = L.circleMarker(
+          [
+            regiaoAtual.representacao.latitude,
+            regiaoAtual.representacao.longitude
+          ],
+          estilo
+        );
+      } else {
+        circle.setStyle(estilo);
+      }
     } else {
       // estado
-      marker = L.polygon(regiaoAtual.representacao, {
+      const polygon = <L.Polygon>marker;
+
+      const estilo: L.PolylineOptions = {
         color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
         fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
         weight: 3,
         fillOpacity: 0.9
-      });
+      };
+
+      if (!polygon) {
+        marker = L.polygon(regiaoAtual.representacao, estilo);
+      } else {
+        polygon.setStyle(estilo);
+      }
     }
-
-    const ultimoCaso =
-      regiaoAtual?.timeseries[regiaoAtual.timeseries.length - 1];
-
-    marker.unbindTooltip().bindTooltip(
-      this.translate.instant("map.tooltip", {
-        regionName: regiaoAtual.nome,
-        regionConfirmed: regiaoAtual.confirmed,
-        regionDeaths: regiaoAtual.deaths,
-        lastUpdate: moment(ultimoCaso?.date).format("LL")
-      })
-    );
 
     return marker;
   }
@@ -439,11 +336,54 @@ export class MapComponent
 
   private limparMarkers() {
     this.markersRegioes?.forEach(marker => this.map.removeLayer(marker));
-    this.markersRegioes = [];
   }
 
-  private adicionarRegioesAoMapa() {
-    const maiorCaso = Object.keys(this.regioes).reduce(
+  private adicionarRegioesAoMapa() {}
+
+  private criarMarker(regiaoAtual): L.Path {
+    if (typeof regiaoAtual != "undefined") {
+      this.totalConfirmed += regiaoAtual.confirmed;
+      this.totalDeath += regiaoAtual.deaths;
+      const razao = regiaoAtual.confirmed / this.maiorCaso;
+
+      const bringMarkerToFront = marker => {
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+          marker.bringToFront();
+        }
+      };
+
+      return this.desenharRegiao(regiaoAtual, razao)
+        .off()
+        .on({
+          mouseout: ({ target: marker }) => {
+            marker.setStyle({
+              color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
+              fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths)
+            });
+            bringMarkerToFront(marker);
+          },
+          mouseover: ({ target: marker }) => {
+            marker.setStyle({
+              fillColor: "#777"
+            });
+            bringMarkerToFront(marker);
+          },
+          click: _ => {
+            this.store.dispatch(DeselectRegion());
+            this.store.dispatch(SelectRegion({ region: { ...regiaoAtual } }));
+          }
+        });
+    }
+  }
+
+  private async atualizarMarker(regiaoAtual) {
+    const markerParaAtualizar = this.markersRegioes[regiaoAtual.codigo_ibge];
+  }
+
+  maiorCaso;
+
+  private calculaMaiorCaso() {
+    this.maiorCaso = Object.keys(this.regioes).reduce(
       (prev, curr) =>
         prev < this.regioes[curr].confirmed
           ? this.regioes[curr].confirmed
@@ -452,49 +392,45 @@ export class MapComponent
     );
 
     this.totalDeath = this.totalConfirmed = 0;
-
-    Object.keys(this.regioes).forEach(ibge => {
-      const regiaoAtual = this.regioes[ibge];
-      if (typeof regiaoAtual != "undefined") {
-        //if (regiaoAtual.confirmed > 0) {
-        this.totalConfirmed += regiaoAtual.confirmed;
-        this.totalDeath += regiaoAtual.deaths;
-        const razao = regiaoAtual.confirmed / maiorCaso;
-
-        const bringMarkerToFront = marker => {
-          if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-            marker.bringToFront();
-          }
-        };
-        const marker = this.desenharRegiao(regiaoAtual, razao)
-          .on({
-            mouseout: ({ target: marker }) => {
-              marker.setStyle({
-                color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
-                fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths)
-              });
-              bringMarkerToFront(marker);
-            },
-            mouseover: ({ target: marker }) => {
-              marker.setStyle({
-                fillColor: "#777"
-              });
-              bringMarkerToFront(marker);
-            },
-            click: _ => {
-              this.store.dispatch(DeselectRegion());
-              this.store.dispatch(SelectRegion({ region: { ...regiaoAtual } }));
-            }
-          })
-          .addTo(this.map);
-        this.markersRegioes[regiaoAtual.codigo_ibge] = marker;
-        // }
-      }
-    });
   }
 
-  private async initMap() {
+  private initMap() {
+    if (!this.regioes) return;
+    const proximosMarkers = [];
+
+    this.calculaMaiorCaso();
+
+    Object.keys(this.regioes).forEach(regiao_ibge => {
+      const regiao = this.regioes[regiao_ibge];
+      let markerAtual = this.markersRegioes[regiao_ibge];
+
+      if (!markerAtual) {
+        markerAtual = this.criarMarker(regiao);
+        markerAtual.addTo(this.map);
+      } else {
+        this.criarMarker(regiao);
+      }
+
+      const ultimoCaso = regiao?.timeseries[regiao.timeseries.length - 1];
+
+      markerAtual.unbindTooltip().bindTooltip(
+        this.translate.instant("map.tooltip", {
+          regionName: regiao.nome,
+          regionConfirmed: regiao.confirmed,
+          regionDeaths: regiao.deaths,
+          lastUpdate: moment(ultimoCaso?.date).format("LL")
+        })
+      );
+
+      // adiciona markerAtual a proximoMarkers
+      proximosMarkers[regiao.codigo_ibge] = markerAtual;
+
+      // remove markerAtual da lista atual de markers
+      this.markersRegioes[regiao.codigo_ibge] = null;
+      delete this.markersRegioes[regiao.codigo_ibge];
+    });
     this.limparMarkers();
-    this.adicionarRegioesAoMapa();
+    this.markersRegioes = proximosMarkers;
+    //this.adicionarRegioesAoMapa();
   }
 }
