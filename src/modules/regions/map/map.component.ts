@@ -413,14 +413,16 @@ export class MapComponent
 
       const ultimoCaso = regiao?.timeseries[regiao.timeseries.length - 1];
 
-      markerAtual.unbindTooltip().bindTooltip(
-        this.translate.instant("map.tooltip", {
-          regionName: regiao.nome,
-          regionConfirmed: regiao.confirmed,
-          regionDeaths: regiao.deaths,
-          lastUpdate: moment(ultimoCaso?.date).format("LL")
-        })
-      );
+      if (!L.Browser.mobile) {
+        markerAtual.unbindTooltip().bindTooltip(
+          this.translate.instant("map.tooltip", {
+            regionName: regiao.nome,
+            regionConfirmed: regiao.confirmed,
+            regionDeaths: regiao.deaths,
+            lastUpdate: moment(ultimoCaso?.date).format("LL")
+          })
+        );
+      }
 
       // adiciona markerAtual a proximoMarkers
       proximosMarkers[regiao.codigo_ibge] = markerAtual;
