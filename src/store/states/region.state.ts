@@ -1,5 +1,6 @@
 import { Region } from "../../models/Region";
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
+import moment from "moment-timezone"
 
 export enum MapModeEnum {
   SELECT_CITY = "SELECT_CITY",
@@ -20,6 +21,7 @@ export interface RegionState extends EntityState<Region> {
   error : any;
   selectedRegionId : number;
   mapMode : MapModeEnum;
+  date: moment.Moment;
 }
 
 export const regionAdapter: EntityAdapter<Region> = createEntityAdapter<Region>({
@@ -30,5 +32,6 @@ export const initialRegionState: RegionState = regionAdapter.getInitialState({
   loading: false,
   error: null,
   selectedRegionId: null,
-  mapMode: MapModeEnum.SELECT_CITY
+  mapMode: MapModeEnum.SELECT_CITY,
+  date: null
 });

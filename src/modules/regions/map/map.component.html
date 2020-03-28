@@ -6,17 +6,24 @@
     <div id="map">
       <div class="middle">
         <mat-form-field>
-          <mat-label>{{ 'map.maplabel' | translate }}</mat-label>
+          <mat-label>{{ "map.maplabel" | translate }}</mat-label>
           <mat-select
             [(value)]="mapMode"
             (selectionChange)="mudancaDeModo($event)"
-            value=""
           >
             <mat-option
               *ngFor="let mode of objectKeys(modesMapped)"
               [value]="mode"
             >
-            {{ modesMapped[mode] | translate }}
+              {{ modesMapped[mode] | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{ "map.date" | translate }}</mat-label>
+          <mat-select [(value)]="mapDate" (selectionChange)="mudancaDeData($event)">
+            <mat-option *ngFor="let day of availableDates" [value]="day">
+              {{ day?.format('LL') }}
             </mat-option>
           </mat-select>
         </mat-form-field>

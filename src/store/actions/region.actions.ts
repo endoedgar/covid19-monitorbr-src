@@ -1,6 +1,7 @@
 import { createAction, props } from "@ngrx/store";
 import { Region } from "../../models/Region";
 import { MapModeEnum } from '../states/region.state';
+import moment from 'moment-timezone';
 
 export const GetRegions = createAction("[REGION] GetRegions");
 
@@ -28,10 +29,17 @@ export const ChangeMode = createAction(
   props<{ mode: MapModeEnum }>()
 );
 
+export const SetDate = createAction(
+  "[REGION] Set Date",
+  props<{ date: moment.Moment }>()
+);
+
 export const RegionActionTypes = {
   GetRegions,
   GetRegionsSuccess,
   GetRegionsFailure,
+
+  SetDate,
 
   DeselectRegion,
   SelectRegion

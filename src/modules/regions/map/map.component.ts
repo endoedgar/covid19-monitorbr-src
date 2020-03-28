@@ -18,14 +18,16 @@ import {
   selectRegionsLoading$,
   getRegionsWithLatestCases$,
   getCurrentRegion$,
-  selectRegionsMapMode$
+  selectRegionsMapMode$,
+  selectRegionsDate$
 } from "src/store/selectors/region.selectors";
 import { TimeSeriesService } from "src/services/timeseries.service";
 import {
   GetRegions,
   SelectRegion,
   ChangeMode,
-  DeselectRegion
+  DeselectRegion,
+  SetDate
 } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { scan, toArray } from "rxjs/operators";
@@ -79,6 +81,7 @@ export class MapComponent
   );
   public loading$ = this.store.select(selectTimeSeriesLoading$);
   private mapMode$ = this.store.select(selectRegionsMapMode$);
+  private mapDate$ = this.store.select(selectRegionsDate$);
 
   private map: L.Map;
   private subscriptions$: Subscription[];
@@ -91,6 +94,9 @@ export class MapComponent
   public totalConfirmed: number;
   public totalDeath: number;
   public modesMapped = MapModeEnum2LabelMapping;
+  public availableDates = [];
+  public mapDate: moment.Moment;
+  public objectIsExtensible = Object.isExtensible;
   @ViewChild("drawer") public sidenav: MatSidenav;
 
   constructor(
@@ -102,7 +108,15 @@ export class MapComponent
     private dialog: MatDialog,
     private elRef: ElementRef,
     private cdRef: ChangeDetectorRef
-  ) {}
+  ) {
+    const firstDay = moment("2020-02-26").startOf('day');
+    const vetSize = moment().diff(firstDay, "days")+1;
+    this.availableDates = Array(vetSize)
+      .fill(0)
+      .map((x, i) => moment(firstDay).add((vetSize-1)-i, "days").startOf('day'));
+    console.log(this.availableDates[0].format('LL'));
+    this.store.dispatch(SetDate({date: this.availableDates[0]}))
+  }
   ngOnDestroy(): void {
     this.subscriptions$.forEach($s => $s.unsubscribe());
     this.subscriptions$ = null;
@@ -127,14 +141,14 @@ export class MapComponent
     this.abreAvisoInicial(false);
     this.obterDados();
     moment.tz.setDefault("UTC");
-
-    this.translate.onLangChange.subscribe(c =>{
-      this.translate.get("map.title").subscribe(console.log);
-    });
   }
 
   mudancaDeModo(event) {
     this.store.dispatch(ChangeMode({ mode: event.value }));
+  }
+
+  mudancaDeData(event) {
+    this.store.dispatch(SetDate({ date: event.value }));
   }
 
   private addLegenda() {
@@ -183,8 +197,11 @@ export class MapComponent
 
   ngAfterContentInit(): void {
     this.subscriptions$ = [
+      this.mapDate$.subscribe(mapDate => {
+        this.mapDate = mapDate;
+      }),
       this.mapMode$.subscribe(mapMode => {
-        this.mapMode = mapMode
+        this.mapMode = mapMode;
       }),
       // desenhar fronteiras do brasil
       this.getJSON("assets/data/brazil.json").subscribe(brasil => {
@@ -199,6 +216,8 @@ export class MapComponent
       }),
 
       getRegionsWithLatestCases$(this.store).subscribe((regioes: Region[]) => {
+        console.log("Recarregando");
+
         this.regioes = regioes;
         this.initMap();
 

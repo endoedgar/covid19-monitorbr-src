@@ -21,16 +21,22 @@ import { MatSidenavModule } from "@angular/material/sidenav";
 import { MatSelectModule } from "@angular/material/select";
 import { MapComponent } from "./map/map.component";
 import { TimeSeriesEffects } from "src/store/effects/timeseries.effects";
-import { AvisoInicialComponent } from './aviso-inicial/aviso-inicial.component';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { UIEffects } from 'src/store/effects/ui.effects';
-import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
-import {TranslateHttpLoader} from '@ngx-translate/http-loader';
-import { HttpClient } from '@angular/common/http';
+import { AvisoInicialComponent } from "./aviso-inicial/aviso-inicial.component";
+import { MatButtonModule } from "@angular/material/button";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { MatSliderModule } from "@angular/material/slider";
+import { UIEffects } from "src/store/effects/ui.effects";
+import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
+import { TranslateHttpLoader } from "@ngx-translate/http-loader";
+import { HttpClient } from "@angular/common/http";
 
 @NgModule({
-  declarations: [BodyReduxComponent, RegionListComponent, MapComponent, AvisoInicialComponent],
+  declarations: [
+    BodyReduxComponent,
+    RegionListComponent,
+    MapComponent,
+    AvisoInicialComponent
+  ],
   imports: [
     CommonModule,
     StoreModule.forFeature("regions", reducers.regions),
@@ -53,11 +59,12 @@ import { HttpClient } from '@angular/common/http';
     MatSelectModule,
     MatButtonModule,
     MatSnackBarModule,
+    MatSliderModule,
     TranslateModule.forChild({
       loader: {
-          provide: TranslateLoader,
-          useFactory: HttpLoaderFactory,
-          deps: [HttpClient]
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient]
       }
     })
   ],
