@@ -37,7 +37,6 @@ import {
   MapModeEnum,
   MapModeEnum2LabelMapping
 } from "src/store/states/region.state";
-import { DatePipe } from "@angular/common";
 import moment from "moment-timezone";
 import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
 import { AvisoInicialComponent } from "../aviso-inicial/aviso-inicial.component";
@@ -79,6 +78,7 @@ export class MapComponent
   public ultimaAtualizacao$ = this.store.select(
     selectTimeSeriesUltimaAtualizacao$
   );
+  public ultimaAtualizacao;
   public loading$ = this.store.select(selectTimeSeriesLoading$);
   private mapMode$ = this.store.select(selectRegionsMapMode$);
   private mapDate$ = this.store.select(selectRegionsDate$);
@@ -103,7 +103,6 @@ export class MapComponent
     private http: HttpClient,
     private store: Store<AppState>,
     private timeSeriesService: TimeSeriesService,
-    private datePipe: DatePipe,
     public translate: TranslateService,
     private dialog: MatDialog,
     private elRef: ElementRef,
@@ -196,6 +195,9 @@ export class MapComponent
 
   ngAfterContentInit(): void {
     this.subscriptions$ = [
+      this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
+        this.ultimaAtualizacao = (ultimaAtualizacao instanceof Date) ? moment(ultimaAtualizacao).format("LL") : "...";
+      }),
       this.mapDate$.subscribe(mapDate => {
         this.mapDate = mapDate;
       }),
@@ -255,7 +257,7 @@ export class MapComponent
         regionConfirmed: regiao.confirmed,
         regionDeaths: regiao.deaths,
         divCanvasId,
-        lastUpdate: this.datePipe.transform(ultimoCaso.date)
+        lastUpdate: moment(ultimoCaso.date).format("LL")
       });
     }
 
@@ -412,7 +414,7 @@ export class MapComponent
         regionName: regiaoAtual.nome,
         regionConfirmed: regiaoAtual.confirmed,
         regionDeaths: regiaoAtual.deaths,
-        lastUpdate: this.datePipe.transform(ultimoCaso?.date)
+        lastUpdate: moment(ultimoCaso?.date).format("LL")
       })
     );
 

@@ -78,7 +78,7 @@
             <span>{{
               "map.lastUpdated"
                 | translate
-                  : { ultimaAtualizacao$: ultimaAtualizacao$ | async | date }
+                  : { ultimaAtualizacao$: ultimaAtualizacao }
             }}</span
             ><br />
             <div [innerHTML]="'map.info' | translate"></div>
