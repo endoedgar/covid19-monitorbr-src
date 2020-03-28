@@ -44,7 +44,7 @@ export class TimeSeriesService {
         this._ultimaAtualizacaoDados = new Date(tables.find(table => table.name == "caso").import_date);
       }),
       switchMap(tables =>
-        getData(tables.find(table => table.name == "caso").data_url)
+        getData(tables.find(table => table.name == "caso").data_url+"?page_size=10000")
       ),
       expand((response: any) =>
         of(null).pipe(
