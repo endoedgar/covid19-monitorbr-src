@@ -39,7 +39,7 @@ export class TimeSeriesService {
   pegar(url) {
     const getData = url => this.httpClient.get(url);
     const obs$ = getData(url).pipe(
-      map((response: any) => response.tables),
+      /*map((response: any) => response.tables),
       tap(tables => {
         this._ultimaAtualizacaoDados = new Date(tables.find(table => table.name == "caso").import_date);
       }),
@@ -53,8 +53,11 @@ export class TimeSeriesService {
             return response.next ? getData(response.next) : of();
           })
         )
-      ),
-      flatMap((o: any) => o.results),
+      ),*/
+      flatMap((o: any) => {
+        this._ultimaAtualizacaoDados = new Date(o.ultimaAtualizacaoDados);
+        return o.results
+      }),
       toArray(),
       switchMap((array: any[]) => {
         return from(

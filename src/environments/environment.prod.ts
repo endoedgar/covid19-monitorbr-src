@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: "https://brasil.io/api/dataset/covid19"
+  apiUrl: "https://raw.githubusercontent.com/endoedgar/covid19-brasilio-data-fetch/master/dados/dados.json"
 };
