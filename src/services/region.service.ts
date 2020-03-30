@@ -18,6 +18,8 @@ export class RegionService {
           codigo_ibge: city.codigo_ibge,
           confirmed: 0,
           deaths: 0,
+          sigla: null,
+          codigo_uf: city.codigo_uf,
           tipo: RegionTipoEnum.CIDADE,
           representacao: { longitude: city.longitude, latitude: city.latitude }
         };
@@ -34,6 +36,8 @@ export class RegionService {
         nome: state.properties.name,
         codigo_ibge: state.properties.codigo_ibg,
         tipo: RegionTipoEnum.ESTADO,
+        codigo_uf: null,
+        sigla: state.properties.sigla,
         representacao: state.geometry.coordinates.map(polygon =>
           polygon.map(lines => lines.map(vec => [vec[1], vec[0]]))
         ),

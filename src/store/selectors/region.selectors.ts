@@ -52,21 +52,36 @@ export const selectRegionsDate$ = createSelector(
   state => state.date
 );
 
+export const selectMapRegion$ = createSelector(
+  selectRegionState$,
+  state => state.mapRegion
+);
+
+export const selectSelectedMapRegion$ = createSelector(
+  selectRegionState$,
+  selectAllRegions$,
+  (state,regions) => state.mapRegion != null ? regions.find(r => r.sigla == state.mapRegion) : undefined
+);
+
 export const getRegionsWithLatestCases$ = store =>
   combineLatest(
     store.select(selectAllRegionsEntities$),
     store.select(selectAllTimeSeries$),
     store.select(selectRegionsMapMode$),
     store.select(selectRegionsDate$),
+    store.select(selectSelectedMapRegion$),
     (
       regions: Region[],
       allTimeSeries: TimeSeries[],
       currentMode: MapModeEnum,
-      date: Date
+      date: Date,
+      selectedMapRegion: Region
     ) => {
       const returnedRegions = {};
       allTimeSeries.forEach(timeseries => {
         const region = regions[timeseries.city_ibge_code];
+        if(selectedMapRegion != null && region?.codigo_uf != selectedMapRegion?.codigo_ibge)
+          return;
         if (typeof region != "undefined" && new Date(timeseries.date) < date) {
           if (
             ([
@@ -104,7 +119,7 @@ export const getRegionsWithLatestCases$ = store =>
           }
         }
       });
-
+      console.log(selectedMapRegion);
       return returnedRegions;
     }
   );

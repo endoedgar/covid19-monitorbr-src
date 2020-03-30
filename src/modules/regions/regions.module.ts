@@ -44,7 +44,7 @@ import { PopupChartComponent } from './popup-chart/popup-chart.component';
     StoreModule.forFeature("regions", reducers.regions),
     StoreModule.forFeature("timeseries", reducers.timeseries),
     EffectsModule.forFeature([RegionsEffects, TimeSeriesEffects, UIEffects]),
-    RouterModule.forChild([{ path: "", component: BodyReduxComponent }]),
+    RouterModule.forChild([{ path: "", component: BodyReduxComponent }, {path: ":state", component: BodyReduxComponent}]),
     FormsModule,
     ReactiveFormsModule,
     FormsModule,

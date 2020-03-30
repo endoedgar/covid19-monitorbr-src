@@ -8,8 +8,10 @@ export enum RegionTipoEnum {
 export interface Region {
     codigo_ibge: number;
     nome: string;
+    codigo_uf: number;
 
     tipo: RegionTipoEnum;
+    sigla: string;
     representacao : {latitude: number;
         longitude: number;} | LatLngExpression[][];
 

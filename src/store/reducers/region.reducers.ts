@@ -7,7 +7,8 @@ import {
   SelectRegion,
   ChangeMode,
   DeselectRegion,
-  SetDate
+  SetDate,
+  ChangeMapRegion
 } from "../actions/region.actions";
 import {
   initialRegionState,
@@ -56,5 +57,9 @@ export const reducer = createReducer(
   on(SetDate, (state, action) => ({
     ...state,
     date: action.date
+  })),
+  on(ChangeMapRegion, (state,action) => ({
+    ...state,
+    mapRegion: action.region
   }))
 );

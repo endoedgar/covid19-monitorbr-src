@@ -59,7 +59,7 @@
       <div class="leaflet-control-container">
         <div class="leaflet-bottom leaflet-left">
           <div class="leaflet-control info legend leaflet-control">
-            <span>{{ "map.title" | translate }}</span
+            <span>{{ "map.title" | translate }} {{(getSelectedMapRegion$ | async)?.nome}}</span
             ><br />
             <span
               [innerHTML]="

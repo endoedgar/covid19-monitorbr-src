@@ -6,7 +6,7 @@ export enum MapModeEnum {
   SELECT_CITY = "SELECT_CITY",
   SELECT_STATE = "SELECT_STATE",
   SELECT_CITY_PER_DAY = "SELECT_CITY_PER_DAY",
-  SELECT_STATE_PER_DAY = "SELECT_STATE_PER_DAY",
+  SELECT_STATE_PER_DAY = "SELECT_STATE_PER_DAY"
 };
 
 export const MapModeEnum2LabelMapping: Record<MapModeEnum, string> = {
@@ -22,6 +22,7 @@ export interface RegionState extends EntityState<Region> {
   selectedRegionId : number;
   mapMode : MapModeEnum;
   date: moment.Moment;
+  mapRegion : string;
 }
 
 export const regionAdapter: EntityAdapter<Region> = createEntityAdapter<Region>({
@@ -33,5 +34,6 @@ export const initialRegionState: RegionState = regionAdapter.getInitialState({
   error: null,
   selectedRegionId: null,
   mapMode: MapModeEnum.SELECT_CITY,
-  date: null
+  date: null,
+  mapRegion: null
 });

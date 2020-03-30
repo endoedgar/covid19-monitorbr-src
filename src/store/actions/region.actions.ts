@@ -34,6 +34,11 @@ export const SetDate = createAction(
   props<{ date: moment.Moment }>()
 );
 
+export const ChangeMapRegion = createAction(
+  "[REGION] Change Map Region",
+  props<{ region: string }>()
+);
+
 export const RegionActionTypes = {
   GetRegions,
   GetRegionsSuccess,
@@ -42,5 +47,6 @@ export const RegionActionTypes = {
   SetDate,
 
   DeselectRegion,
-  SelectRegion
+  SelectRegion,
+  ChangeMapRegion
 };

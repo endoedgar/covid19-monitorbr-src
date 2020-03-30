@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
-import { Observable, Subscription, from } from "rxjs";
+import { Observable, Subscription, from, merge } from "rxjs";
 import { Region } from "src/models/Region";
 import { AppState } from "src/store/states/app.state";
 import { Store } from "@ngrx/store";
@@ -22,7 +22,9 @@ import {
   getRegionsWithLatestCases$,
   getCurrentRegion$,
   selectRegionsMapMode$,
-  selectRegionsDate$
+  selectRegionsDate$,
+  selectMapRegion$,
+  selectSelectedMapRegion$
 } from "src/store/selectors/region.selectors";
 import { TimeSeriesService } from "src/services/timeseries.service";
 import {
@@ -30,10 +32,11 @@ import {
   SelectRegion,
   ChangeMode,
   DeselectRegion,
-  SetDate
+  SetDate,
+  ChangeMapRegion
 } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
-import { scan, toArray } from "rxjs/operators";
+import { scan, toArray, flatMap } from "rxjs/operators";
 import { MatSidenav } from "@angular/material/sidenav";
 import {
   MapModeEnum,
@@ -48,6 +51,7 @@ import {
 } from "src/store/selectors/timeseries.selectors";
 import { TranslateService } from "@ngx-translate/core";
 import { PopupChartComponent } from "../popup-chart/popup-chart.component";
+import { ActivatedRoute } from "@angular/router";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -84,8 +88,11 @@ export class MapComponent
   public ultimaAtualizacao;
   public loading$ = this.store.select(selectTimeSeriesLoading$);
   private mapDate$ = this.store.select(selectRegionsDate$);
+  public getSelectedMapRegion$ = this.store.select(selectSelectedMapRegion$);
   public mapMode: MapModeEnum;
 
+  @ViewChild('map', {static: true}) protected mapDivRef: ElementRef;
+  protected mapDiv: HTMLDivElement;
   private map: L.Map;
   private subscriptions$: Subscription[];
 
@@ -111,7 +118,8 @@ export class MapComponent
     private elRef: ElementRef,
     private cdRef: ChangeDetectorRef,
     private resolver: ComponentFactoryResolver,
-    private injector: Injector
+    private injector: Injector,
+    private activeRoute: ActivatedRoute
   ) {
     const firstDay = moment("2020-02-26").startOf("day");
     const vetSize = moment().diff(firstDay, "days") + 1;
@@ -125,8 +133,15 @@ export class MapComponent
     this.store.dispatch(SetDate({ date: this.availableDates[0] }));
   }
   ngOnDestroy(): void {
+    console.log("destruingo");
     this.subscriptions$.forEach($s => $s.unsubscribe());
     this.subscriptions$ = null;
+    if (this.map) {
+      this.markersRegioes.forEach(m => m.remove());
+      this.map.off();
+      this.map.remove();
+      this.map = null;
+    }
   }
 
   useLanguage(language: string) {
@@ -148,6 +163,14 @@ export class MapComponent
     this.abreAvisoInicial(false);
     this.obterDados();
     moment.tz.setDefault("UTC");
+    this.mapDiv = this.mapDivRef.nativeElement;
+    //this.store.dispatch(ChangeMapRegion({ region: null }));
+
+    this.activeRoute.params.subscribe(routeParams => {
+      const state = routeParams["state"];
+      if (state?.length)
+        this.store.dispatch(ChangeMapRegion({ region: state }));
+    });
   }
 
   mudancaDeModo(event) {
@@ -181,76 +204,108 @@ export class MapComponent
     legend.addTo(this.map);
   }
 
+  private geoJSONFronteira: L.GeoJSON;
+
   ngAfterViewInit(): void {
-    this.map = L.map("map", {
-      center: [-13.5748266, -49.6352299],
-      zoom: 4
-      //preferCanvas: true
-    });
+    if (!this.map) {
+      console.log("recriando mapa")
+      this.map = L.map("map", {
+        center: [-13.5748266, -49.6352299],
+        zoom: 4,
 
-    this.addLegenda();
+      });
 
-    const tiles = L.tileLayer(
-      "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
-      {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      const tiles = L.tileLayer(
+        "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      );
+
+      this.addLegenda();
+      tiles.addTo(this.map);
+    }
+
+    this.getSelectedMapRegion$.subscribe((region: any) => {
+      if (this.geoJSONFronteira) {
+        this.geoJSONFronteira.remove();
+        this.geoJSONFronteira = null;
       }
-    );
 
-    tiles.addTo(this.map);
+      if (region?.sigla != null) {
+        this.getJSON("assets/data/brazil-states.geojson").subscribe(brasil => {
+          this.geoJSONFronteira = L.geoJSON(brasil, {
+            style: function(feature) {
+              const a = feature.properties && feature.properties.style;
+              return { ...a, weight: 1, fillOpacity: 0 };
+            },
+            filter: feature => feature.properties.sigla == region.sigla
+          })
+            .addTo(this.map)
+            .bringToBack();
+          this.map.fitBounds(this.geoJSONFronteira.getBounds());
+        });
+      } else {
+        // desenhar fronteiras do brasil
+        this.getJSON("assets/data/brazil.json").subscribe(brasil => {
+          this.geoJSONFronteira = L.geoJSON(brasil, {
+            style: function(feature) {
+              const a = feature.properties && feature.properties.style;
+              return { ...a, weight: 1, fillOpacity: 0 };
+            }
+          })
+            .addTo(this.map)
+            .bringToBack();
+          this.map.fitBounds(this.geoJSONFronteira.getBounds());
+        });
+      }
+    });
   }
 
   ngAfterContentInit(): void {
-    this.subscriptions$ = [
-      this.store.select(selectRegionsMapMode$).subscribe(mapMode => {
-        this.mapMode = mapMode;
-      }),
-      this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
-        this.ultimaAtualizacao =
-          ultimaAtualizacao instanceof Date
-            ? moment(ultimaAtualizacao).format("LL")
-            : "...";
-      }),
-      this.mapDate$.subscribe(mapDate => {
-        this.mapDate = mapDate;
-      }),
-      // desenhar fronteiras do brasil
-      this.getJSON("assets/data/brazil.json").subscribe(brasil => {
-        L.geoJSON(brasil, {
-          style: function(feature) {
-            const a = feature.properties && feature.properties.style;
-            return { ...a, weight: 1, fillOpacity: 0 };
+    setTimeout(_ => {
+      this.subscriptions$ = [
+        this.store.select(selectRegionsMapMode$).subscribe(mapMode => {
+          this.mapMode = mapMode;
+        }),
+        this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
+          this.ultimaAtualizacao =
+            ultimaAtualizacao instanceof Date
+              ? moment(ultimaAtualizacao).format("LL")
+              : "...";
+        }),
+        this.mapDate$.subscribe(mapDate => {
+          this.mapDate = mapDate;
+        }),
+
+        getRegionsWithLatestCases$(this.store).subscribe(
+          (regioes: Region[]) => {
+            this.regioes = regioes;
+            this.initMap();
+          }
+        ),
+
+        this.store.select(getCurrentRegion$).subscribe(region => {
+          if (region != null) {
+            const marker = this.markersRegioes[region?.codigo_ibge];
+            if (marker != null) {
+              this.mostraPopup(marker);
+            }
           }
         })
-          .addTo(this.map)
-          .bringToBack();
-      }),
+      ];
 
-      getRegionsWithLatestCases$(this.store).subscribe((regioes: Region[]) => {
-        this.regioes = regioes;
-        this.initMap();
-      }),
+      // Correção para exibir no browser android
+      const resizeCorrectly = () => {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty("--vh", `${vh}px`);
+      };
 
-      this.store.select(getCurrentRegion$).subscribe(region => {
-        if (region != null) {
-          const marker = this.markersRegioes[region?.codigo_ibge];
-          if (marker != null) {
-            this.mostraPopup(marker);
-          }
-        }
-      })
-    ];
-
-    // Correção para exibir no browser android
-    const resizeCorrectly = () => {
-      let vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    resizeCorrectly();
-    window.addEventListener("resize", resizeCorrectly);
+      resizeCorrectly();
+      window.addEventListener("resize", resizeCorrectly);
+    });
   }
 
   async mostraPopup(layer: L.Path) {
