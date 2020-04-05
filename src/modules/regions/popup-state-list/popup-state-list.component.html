@@ -1,0 +1,13 @@
+<h1>{{ 'map.selectState' | translate }}</h1>
+<ul>
+    <li *ngFor="let estado of estados">
+        <a
+        href="#"
+        (click)="$event.preventDefault(); mudarEstado(estado)"
+        role="button"
+      >
+        <img src="{{ 'assets/flags/'+ estado.uf + '.svg' }}" width="30em" />
+        {{ estado.nome }}
+        </a>
+    </li>
+</ul>

@@ -1,11 +1,23 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { RouteGuard } from 'src/services/routeguard.service';
 
 const routes: Routes = [
   {
-    path: "",
-     loadChildren: () =>
-    import('src/modules/regions/regions.module').then(m => m.RegionsModule) 
+    path: ":state",
+    canActivate: [ RouteGuard ],
+    children: [],
+    pathMatch: 'full'
+  },
+  {
+    path: ":state/:mode/:date",
+    canActivate: [ RouteGuard ],
+    children: [],
+    pathMatch: 'full'
+  },
+  {
+    path: "**",
+    redirectTo: "BR/SELECT_CITY/last"
   }
 ];
 

@@ -6,37 +6,31 @@ import {
   AfterContentInit,
   OnDestroy,
   ElementRef,
-  ChangeDetectorRef,
   ComponentFactoryResolver,
   Injector,
   ComponentRef
 } from "@angular/core";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
-import { Observable, Subscription, from, merge } from "rxjs";
+import { Observable, Subscription } from "rxjs";
 import { Region } from "src/models/Region";
 import { AppState } from "src/store/states/app.state";
 import { Store } from "@ngrx/store";
 import {
-  selectRegionsLoading$,
   getRegionsWithLatestCases$,
   getCurrentRegion$,
   selectRegionsMapMode$,
   selectRegionsDate$,
-  selectMapRegion$,
   selectSelectedMapRegion$
 } from "src/store/selectors/region.selectors";
-import { TimeSeriesService } from "src/services/timeseries.service";
 import {
   GetRegions,
   SelectRegion,
   ChangeMode,
   DeselectRegion,
-  SetDate,
-  ChangeMapRegion
+  SetDate
 } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
-import { scan, toArray, flatMap } from "rxjs/operators";
 import { MatSidenav } from "@angular/material/sidenav";
 import {
   MapModeEnum,
@@ -51,7 +45,9 @@ import {
 } from "src/store/selectors/timeseries.selectors";
 import { TranslateService } from "@ngx-translate/core";
 import { PopupChartComponent } from "../popup-chart/popup-chart.component";
-import { ActivatedRoute } from "@angular/router";
+import { Router } from '@angular/router';
+import { PopupStateListComponent } from '../popup-state-list/popup-state-list.component';
+//import { ActivatedRoute } from "@angular/router";
 
 // função que colore as bolinhas e estados
 function getColor(d) {
@@ -91,7 +87,8 @@ export class MapComponent
   public getSelectedMapRegion$ = this.store.select(selectSelectedMapRegion$);
   public mapMode: MapModeEnum;
 
-  @ViewChild('map', {static: true}) protected mapDivRef: ElementRef;
+  @ViewChild('map', {static: true}) 
+  protected mapDivRef: ElementRef;
   protected mapDiv: HTMLDivElement;
   private map: L.Map;
   private subscriptions$: Subscription[];
@@ -99,6 +96,7 @@ export class MapComponent
   private markersRegioes: L.Path[] = [];
   private regioes: Region[];
   public options = [];
+  public moment = moment;
 
   public totalConfirmed: number;
   public totalDeath: number;
@@ -108,27 +106,26 @@ export class MapComponent
   public objectIsExtensible = Object.isExtensible;
   public popupComponent: ComponentRef<PopupChartComponent>;
   @ViewChild("drawer") public sidenav: MatSidenav;
+  private geoJSONFronteira: L.GeoJSON;
+  public selectedMapRegion;
 
   constructor(
     private http: HttpClient,
     private store: Store<AppState>,
-    private timeSeriesService: TimeSeriesService,
     public translate: TranslateService,
     private dialog: MatDialog,
-    private elRef: ElementRef,
-    private cdRef: ChangeDetectorRef,
     private resolver: ComponentFactoryResolver,
     private injector: Injector,
-    private activeRoute: ActivatedRoute
+    private router: Router
   ) {
-    const firstDay = moment("2020-02-26").startOf("day");
-    const vetSize = moment().diff(firstDay, "days") + 1;
+    const firstDay = moment("2020-02-26").utc().startOf("day");
+    const vetSize = moment().utc().diff(firstDay, "days") + 1;
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) =>
-        moment(firstDay)
+        moment(firstDay).utc()
           .add(vetSize - 1 - i, "days")
-          .startOf("day")
+          .startOf("day").format("YYYY-MM-DD")
       );
     this.store.dispatch(SetDate({ date: this.availableDates[0] }));
   }
@@ -163,22 +160,35 @@ export class MapComponent
     this.abreAvisoInicial(false);
     this.obterDados();
     moment.tz.setDefault("UTC");
-    this.mapDiv = this.mapDivRef.nativeElement;
-    //this.store.dispatch(ChangeMapRegion({ region: null }));
+    this.mapDiv = this.mapDivRef?.nativeElement;
+  }
 
-    this.activeRoute.params.subscribe(routeParams => {
-      const state = routeParams["state"];
-      if (state?.length)
-        this.store.dispatch(ChangeMapRegion({ region: state }));
-    });
+  getDate(date : Date) : string {
+    if(!date)
+      date = this.mapDate;
+    const format = 'YYYY-MM-DD'
+    const dateSelected = moment(date).format(format);
+    const lastDay = moment(this.availableDates[0]).format(format);
+    console.log(dateSelected, lastDay)
+    if(dateSelected == lastDay)
+      return 'last';
+    else
+      return dateSelected;
   }
 
   mudancaDeModo(event) {
-    this.store.dispatch(ChangeMode({ mode: event.value }));
+    const regiao : string = this.selectedMapRegion ? this.selectedMapRegion.sigla : 'BR';
+    const url = [regiao, event.value, this.getDate(null)].join('/');
+    this.router.navigateByUrl(url);
+    //this.store.dispatch(ChangeMode({ mode: event.value }));
   }
 
   mudancaDeData(event) {
-    this.store.dispatch(SetDate({ date: event.value }));
+    const regiao : string = this.selectedMapRegion ? this.selectedMapRegion.sigla : 'BR';
+    const url = [regiao, this.mapMode, this.getDate(event.value)].join('/');
+    this.router.navigateByUrl(url);
+
+    //this.store.dispatch(SetDate({ date: event.value }));
   }
 
   private addLegenda() {
@@ -204,11 +214,22 @@ export class MapComponent
     legend.addTo(this.map);
   }
 
-  private geoJSONFronteira: L.GeoJSON;
+  private setGeoJSONFronteira(geoJSONFronteira : L.GeoJSON) {
+    if (this.geoJSONFronteira) {
+      this.geoJSONFronteira.remove();
+      this.geoJSONFronteira = null;
+    }
+
+    this.geoJSONFronteira = geoJSONFronteira;
+
+    if(this.geoJSONFronteira) {
+      this.geoJSONFronteira.addTo(this.map).bringToBack();
+      this.map.fitBounds(this.geoJSONFronteira.getBounds());
+    }
+  }
 
   ngAfterViewInit(): void {
     if (!this.map) {
-      console.log("recriando mapa")
       this.map = L.map("map", {
         center: [-13.5748266, -49.6352299],
         zoom: 4,
@@ -229,36 +250,26 @@ export class MapComponent
     }
 
     this.getSelectedMapRegion$.subscribe((region: any) => {
-      if (this.geoJSONFronteira) {
-        this.geoJSONFronteira.remove();
-        this.geoJSONFronteira = null;
-      }
-
+      this.selectedMapRegion = region;
       if (region?.sigla != null) {
         this.getJSON("assets/data/brazil-states.geojson").subscribe(brasil => {
-          this.geoJSONFronteira = L.geoJSON(brasil, {
+          this.setGeoJSONFronteira(L.geoJSON(brasil, {
             style: function(feature) {
               const a = feature.properties && feature.properties.style;
               return { ...a, weight: 1, fillOpacity: 0 };
             },
             filter: feature => feature.properties.sigla == region.sigla
-          })
-            .addTo(this.map)
-            .bringToBack();
-          this.map.fitBounds(this.geoJSONFronteira.getBounds());
+          }));
         });
       } else {
         // desenhar fronteiras do brasil
         this.getJSON("assets/data/brazil.json").subscribe(brasil => {
-          this.geoJSONFronteira = L.geoJSON(brasil, {
+          this.setGeoJSONFronteira(L.geoJSON(brasil, {
             style: function(feature) {
               const a = feature.properties && feature.properties.style;
               return { ...a, weight: 1, fillOpacity: 0 };
             }
-          })
-            .addTo(this.map)
-            .bringToBack();
-          this.map.fitBounds(this.geoJSONFronteira.getBounds());
+          }));
         });
       }
     });
@@ -277,7 +288,7 @@ export class MapComponent
               : "...";
         }),
         this.mapDate$.subscribe(mapDate => {
-          this.mapDate = mapDate;
+          this.mapDate = moment(mapDate).format("YYYY-MM-DD");
         }),
 
         getRegionsWithLatestCases$(this.store).subscribe(
@@ -373,6 +384,17 @@ export class MapComponent
     return marker;
   }
 
+  public abrePopupListaEstado() {
+    const dialogConfig = new MatDialogConfig();
+
+    dialogConfig.disableClose = true;
+    dialogConfig.autoFocus = true;
+    dialogConfig.height = "300px";
+    dialogConfig.width = "500px";
+
+    this.dialog.open(PopupStateListComponent, dialogConfig);
+  }
+
   public abreAvisoInicial(forcar: boolean) {
     const AVISOU_ITEM = "avisou";
 
@@ -392,8 +414,6 @@ export class MapComponent
   private limparMarkers() {
     this.markersRegioes?.forEach(marker => this.map.removeLayer(marker));
   }
-
-  private adicionarRegioesAoMapa() {}
 
   private criarMarker(regiaoAtual): L.Path {
     if (typeof regiaoAtual != "undefined") {
@@ -429,10 +449,6 @@ export class MapComponent
           }
         });
     }
-  }
-
-  private async atualizarMarker(regiaoAtual) {
-    const markerParaAtualizar = this.markersRegioes[regiaoAtual.codigo_ibge];
   }
 
   maiorCaso;

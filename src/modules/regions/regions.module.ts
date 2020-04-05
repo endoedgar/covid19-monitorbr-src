@@ -30,6 +30,7 @@ import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
 import { HttpClient } from "@angular/common/http";
 import { PopupChartComponent } from './popup-chart/popup-chart.component';
+import { PopupStateListComponent } from './popup-state-list/popup-state-list.component';
 
 @NgModule({
   declarations: [
@@ -37,14 +38,16 @@ import { PopupChartComponent } from './popup-chart/popup-chart.component';
     RegionListComponent,
     MapComponent,
     AvisoInicialComponent,
-    PopupChartComponent
+    PopupChartComponent,
+    PopupStateListComponent
   ],
+  exports: [ MapComponent ],
   imports: [
     CommonModule,
     StoreModule.forFeature("regions", reducers.regions),
     StoreModule.forFeature("timeseries", reducers.timeseries),
     EffectsModule.forFeature([RegionsEffects, TimeSeriesEffects, UIEffects]),
-    RouterModule.forChild([{ path: "", component: BodyReduxComponent }, {path: ":state", component: BodyReduxComponent}]),
+    //RouterModule.forChild([{ path: "", component: BodyReduxComponent }, {path: ":state", component: BodyReduxComponent}]),
     FormsModule,
     ReactiveFormsModule,
     FormsModule,
@@ -69,8 +72,7 @@ import { PopupChartComponent } from './popup-chart/popup-chart.component';
         deps: [HttpClient]
       }
     })
-  ],
-  entryComponents: []
+  ]
 })
 export class RegionsModule {
   constructor() {}

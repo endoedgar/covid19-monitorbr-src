@@ -80,7 +80,7 @@ export const getRegionsWithLatestCases$ = store =>
       const returnedRegions = {};
       allTimeSeries.forEach(timeseries => {
         const region = regions[timeseries.city_ibge_code];
-        if(selectedMapRegion != null && region?.codigo_uf != selectedMapRegion?.codigo_ibge)
+        if(selectedMapRegion != null && (region?.codigo_uf != selectedMapRegion?.codigo_ibge && region?.codigo_ibge != selectedMapRegion.codigo_ibge))
           return;
         if (typeof region != "undefined" && new Date(timeseries.date) < date) {
           if (
@@ -119,7 +119,6 @@ export const getRegionsWithLatestCases$ = store =>
           }
         }
       });
-      console.log(selectedMapRegion);
       return returnedRegions;
     }
   );

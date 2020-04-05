@@ -18,7 +18,10 @@ import { TimeSeriesEffects } from './effects/timeseries.effects';
       TimeSeriesEffects,
       UIEffects
     ]),
-    environment.production ? [] : StoreDevtoolsModule.instrument()
+    environment.production ? [] : StoreDevtoolsModule.instrument({
+      maxAge: 25,
+      logOnly: environment.production
+    })
   ],
   exports: [StoreModule]
 })

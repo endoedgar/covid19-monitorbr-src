@@ -23,7 +23,7 @@
           <mat-label>{{ "map.date" | translate }}</mat-label>
           <mat-select [(value)]="mapDate" (selectionChange)="mudancaDeData($event)">
             <mat-option *ngFor="let day of availableDates" [value]="day">
-              {{ day?.format('LL') }}
+              {{ moment(day)?.format('LL') }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -33,7 +33,7 @@
           <div class="leaflet-bar leaflet-control">
             <a
               href="#"
-              (click)="drawer.toggle()"
+              (click)="$event.preventDefault(); drawer.toggle()"
               role="button"
               aria-label="Search"
             >
@@ -42,14 +42,14 @@
             <a
               *ngIf="!(loading$ | async); else loadingIcon"
               href="#"
-              (click)="obterDados()"
+              (click)="$event.preventDefault(); obterDados()"
               role="button"
               aria-label="Refresh"
             >
               <i class="material-icons" style="line-height: 30px;">refresh</i>
             </a>
             <ng-template #loadingIcon>
-              <a href="#" role="button">
+              <a href="#" (click)="$event.preventDefault();" role="button">
                 ...
               </a>
             </ng-template>
@@ -59,7 +59,9 @@
       <div class="leaflet-control-container">
         <div class="leaflet-bottom leaflet-left">
           <div class="leaflet-control info legend leaflet-control">
-            <span>{{ "map.title" | translate }} {{(getSelectedMapRegion$ | async)?.nome}}</span
+            <span>{{ "map.title" | translate }} <a
+              href="#"
+              (click)="$event.preventDefault(); abrePopupListaEstado()">{{ (selectedMapRegion?.nome || 'map.brazil') | translate }}</a></span
             ><br />
             <span
               [innerHTML]="
@@ -84,8 +86,8 @@
             <div [innerHTML]="'map.info' | translate"></div>
             Language:
             <span *ngIf="!(loading$ | async); else loadSpan"
-              ><a href="#" (click)="useLanguage('en')">en</a> /
-              <a href="#" (click)="useLanguage('pt-BR')">pt</a></span
+              ><a href="#" (click)="$event.preventDefault(); useLanguage('en')">en</a> /
+              <a href="#" (click)="$event.preventDefault(); useLanguage('pt-BR')">pt</a></span
             >
             <ng-template #loadSpan>
               <span>...</span>
