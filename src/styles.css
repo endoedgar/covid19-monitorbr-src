@@ -44,8 +44,11 @@ body {
   font-size: 2rem !important;
   margin: 0 0 0.5em;
 }
-.leaflet-popup-content {
+.mat-body, .mat-body-1, .mat-typography, .leaflet-container, .leaflet-popup-content {
   font-size: 1rem !important;
+}
+
+.leaflet-popup-content {
   margin: 1em 1em;
 }
 
@@ -70,6 +73,7 @@ body {
   line-height: 1rem;
   color: #555;
 }
+
 .legend i {
   width: 1rem;
   height: 1rem;
@@ -78,7 +82,7 @@ body {
   opacity: 0.7;
 }
 
-@media screen and (max-width: 400px) {
+@media screen and (max-width: 700px) {
   .mat-column-confirmados,
   .mat-column-mortes,
   .mat-column-recuperados,

@@ -32,7 +32,6 @@ export class RouteGuard implements CanActivate {
   ): Observable<boolean|UrlTree>|Promise<boolean|UrlTree>|boolean|UrlTree {
     if(route.params?.state) {
       const region = route.params.state
-      console.log(this.mapRegion, region)
       if(this.mapRegion != region) {
         if(region?.length)
           this.store.dispatch(ChangeMapRegion({ region }));

@@ -130,7 +130,6 @@ export class MapComponent
     this.store.dispatch(SetDate({ date: this.availableDates[0] }));
   }
   ngOnDestroy(): void {
-    console.log("destruingo");
     this.subscriptions$.forEach($s => $s.unsubscribe());
     this.subscriptions$ = null;
     if (this.map) {
@@ -169,7 +168,6 @@ export class MapComponent
     const format = 'YYYY-MM-DD'
     const dateSelected = moment(date).format(format);
     const lastDay = moment(this.availableDates[0]).format(format);
-    console.log(dateSelected, lastDay)
     if(dateSelected == lastDay)
       return 'last';
     else
