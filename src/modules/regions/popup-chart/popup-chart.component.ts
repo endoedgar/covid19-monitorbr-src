@@ -9,7 +9,8 @@ import { Store } from "@ngrx/store";
 import { AppState } from "src/store/states/app.state";
 import {
   selectRegionsMapMode$,
-  getRegionWithLatestCases$
+  getRegionWithLatestCases$,
+  selectSelectedMapRegion$
 } from "src/store/selectors/region.selectors";
 import { Subscription, from } from "rxjs";
 import moment from "moment-timezone";
@@ -17,6 +18,8 @@ import Chart from "chart.js";
 import { scan, toArray } from "rxjs/operators";
 import { MapModeEnum } from "src/store/states/region.state";
 import { TranslateService } from "@ngx-translate/core";
+import estados from "src/assets/data/estados.json";
+import { Router } from '@angular/router';
 
 @Component({
   selector: "app-popup-chart",
@@ -32,14 +35,25 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public lastUpdate;
   public mapMode: MapModeEnum;
+  public estadosPorCodigo;
+  public selectedMapRegion;
 
   constructor(
     private store: Store<AppState>,
-    public translate: TranslateService
-  ) {}
+    public translate: TranslateService,
+    private router: Router
+  ) {
+    this.estadosPorCodigo = estados.reduce((prev, current) => ({...prev, [current.codigo_uf]: current}), {});
+  }
 
   ngOnDestroy(): void {
     this.subscriptions$.forEach(s => s.unsubscribe());
+  }
+
+  mudarEstado(estado) {
+    const sigla = (this.selectedMapRegion) ? this.selectedMapRegion.sigla : "BR";
+
+    this.router.navigateByUrl(this.router.url.replace(sigla, (this.selectedMapRegion?.sigla == estado.uf) ? "BR" : estado.uf));
   }
 
   ngAfterViewInit(): void {
@@ -162,7 +176,8 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
       }),
       getRegionWithLatestCases$(this.store).subscribe(
         region => (this.region = region)
-      )
+      ),
+      this.store.select(selectSelectedMapRegion$).subscribe(region => this.selectedMapRegion = region)
     ];
 
     if (this.region?.timeseries) {

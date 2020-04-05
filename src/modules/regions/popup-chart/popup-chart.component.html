@@ -1,12 +1,19 @@
-<h1>{{ region.nome }}</h1>
-{{ 'regionlist.confirmed' | translate }}: <b>{{ region.confirmed }}</b
-> {{ 'regionlist.deaths' | translate }}: <b style="color: red;">{{ region.deaths }}</b
+<h1>
+  {{ region.nome }}
+  <a
+    href="#"
+    *ngIf="region?.codigo_uf != null"
+    (click)="$event.preventDefault(); mudarEstado(estadosPorCodigo[region?.codigo_uf])"
+    role="button"
+  >
+    <img src="{{ 'assets/flags/' + estadosPorCodigo[region?.codigo_uf].uf + '.svg' }}" width="30em" />
+  </a>
+</h1>
+{{ "regionlist.confirmed" | translate }}: <b>{{ region.confirmed }}</b>
+{{ "regionlist.deaths" | translate }}:
+<b style="color: red;">{{ region.deaths }}</b
 ><br />
 <div>
-  <canvas #chart style="clear:both; position: relative;"></canvas>
+  <canvas #chart style="clear: both; position: relative;"></canvas>
 </div>
-{{
-  "map.lastUpdated"
-    | translate
-      : { ultimaAtualizacao$: lastUpdate }
-}}
+{{ "map.lastUpdated" | translate: { ultimaAtualizacao$: lastUpdate } }}
