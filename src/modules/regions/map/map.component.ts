@@ -119,7 +119,7 @@ export class MapComponent
     private router: Router
   ) {
     const firstDay = moment("2020-02-26").utc().startOf("day");
-    const vetSize = moment().diff(firstDay, "days");
+    const vetSize = moment().utc().diff(firstDay, "days");
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) =>
@@ -281,8 +281,8 @@ export class MapComponent
         }),
         this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
           this.ultimaAtualizacao =
-            ultimaAtualizacao instanceof Date
-              ? moment(ultimaAtualizacao).format("LL")
+            moment.isMoment(ultimaAtualizacao)
+              ? moment(ultimaAtualizacao).local().format("LL")
               : "...";
         }),
         this.mapDate$.subscribe(mapDate => {
@@ -488,7 +488,7 @@ export class MapComponent
             regionName: regiao.nome,
             regionConfirmed: regiao.confirmed,
             regionDeaths: regiao.deaths,
-            lastUpdate: moment(ultimoCaso?.date).format("LL")
+            lastUpdate: moment(ultimoCaso?.date).local().format("LL")
           })
         );
       }

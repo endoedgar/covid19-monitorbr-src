@@ -124,7 +124,7 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
         dadosGerais.forEach(dadoGeral => {
           function s(dados) {
-            return { x: dadoGeral.x, y: dados };
+            return { x: moment.tz(dadoGeral.x, "America/Sao_Paulo"), y: dados };
           }
 
           confirmed.push(s(dadoGeral.confirmeddiff));

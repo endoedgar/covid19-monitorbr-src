@@ -40,17 +40,18 @@ export class RouteGuard implements CanActivate {
       this.store.dispatch(ChangeMapRegion({ region: null }));
     }
 
+    const now = moment().local().startOf("day");
     if(route.params?.date) {
       const date = moment(route.params.date)
       if(this.mapDate != date) {
         if(date.isValid())
           this.store.dispatch(SetDate({ date }));
         else {
-          this.store.dispatch(SetDate({ date: moment() }));
+          this.store.dispatch(SetDate({ date: now }));
         }
       }
     } else {
-      this.store.dispatch(SetDate({ date: moment() }));
+      this.store.dispatch(SetDate({ date: now }));
     }
 
     if(route.params?.mode) {

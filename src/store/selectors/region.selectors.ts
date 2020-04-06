@@ -9,6 +9,7 @@ import { selectAllTimeSeries$ } from "./timeseries.selectors";
 import { combineLatest } from "rxjs";
 import { Region, RegionTipoEnum } from "src/models/Region";
 import { TimeSeries } from "src/models/TimeSeries";
+import moment from "moment-timezone";
 
 export const {
   selectAll: _selectAllRegions,
@@ -74,7 +75,7 @@ export const getRegionsWithLatestCases$ = store =>
       regions: Region[],
       allTimeSeries: TimeSeries[],
       currentMode: MapModeEnum,
-      date: Date,
+      date: moment.Moment,
       selectedMapRegion: Region
     ) => {
       const returnedRegions = {};
@@ -82,7 +83,7 @@ export const getRegionsWithLatestCases$ = store =>
         const region = regions[timeseries.city_ibge_code];
         if(selectedMapRegion != null && (region?.codigo_uf != selectedMapRegion?.codigo_ibge && region?.codigo_ibge != selectedMapRegion.codigo_ibge))
           return;
-        if (typeof region != "undefined" && new Date(timeseries.date) < date) {
+        if (typeof region != "undefined" && timeseries.date.isSameOrBefore(date, 'day')) {
           if (
             ([
               MapModeEnum.SELECT_CITY,
@@ -133,7 +134,7 @@ export const getRegionWithLatestCases$ = store =>
       region: Region,
       allTimeSeries: TimeSeries[],
       currentMode: MapModeEnum,
-      date: Date
+      date: moment.Moment
     ) => {
       if(!region)
         return {}
@@ -144,7 +145,7 @@ export const getRegionWithLatestCases$ = store =>
       allTimeSeries
         .filter(timeSeries => timeSeries.city_ibge_code == region.codigo_ibge)
         .forEach(timeseries => {
-          if (new Date(timeseries.date) < date) {
+          if (timeseries.date.isSameOrBefore(date,'day')) {
             if (
               [MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(
                 currentMode

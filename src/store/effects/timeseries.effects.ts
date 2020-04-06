@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Actions, Effect, ofType } from "@ngrx/effects";
 import { map, switchMap, catchError } from "rxjs/operators";
+import moment from "moment-timezone";
 
 import { TimeSeriesService } from "../../services/timeseries.service";
 import { Observable, of } from "rxjs";
@@ -45,7 +46,7 @@ export class TimeSeriesEffects {
       return of(
         ShowMessage({
           message: this.translate.instant("map.dataLoaded", {
-            lastUpdate: dados.lastUpdate.toLocaleString()
+            lastUpdate: moment(dados.lastUpdate).local().format("LLL")
           })
         })
       );

@@ -1,3 +1,4 @@
+import moment from "moment-timezone";
 import { createAction, props } from "@ngrx/store";
 import { TimeSeries } from "src/models/TimeSeries";
 
@@ -7,7 +8,7 @@ export const GetTimeSeries = createAction(
 
 export const GetTimeSeriesSuccess = createAction(
   "[TIMESERIES] GetTimeseries Success",
-  props<{ timeseries: TimeSeries[], lastUpdate: Date }>()
+  props<{ timeseries: TimeSeries[], lastUpdate: moment.Moment }>()
 );
 
 export const GetTimeSeriesFailure = createAction(

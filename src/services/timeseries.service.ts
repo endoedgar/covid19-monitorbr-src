@@ -26,13 +26,13 @@ import moment from 'moment';
 
 @Injectable({ providedIn: "root" })
 export class TimeSeriesService {
-  private _ultimaAtualizacaoDados: Date;
+  private _ultimaAtualizacaoDados: moment.Moment;
 
   constructor(private httpClient: HttpClient) {
     this._ultimaAtualizacaoDados =  null;
   }
 
-  public getUltimaAtualizacao() : Date {
+  public getUltimaAtualizacao() : moment.Moment {
     return this._ultimaAtualizacaoDados;
   }
 
@@ -55,7 +55,7 @@ export class TimeSeriesService {
         )
       ),*/
       flatMap((o: any) => {
-        this._ultimaAtualizacaoDados = new Date(o.ultimaAtualizacaoDados);
+        this._ultimaAtualizacaoDados = moment.utc(o.ultimaAtualizacaoDados);
         return o.results
       }),
       toArray(),
@@ -81,7 +81,7 @@ export class TimeSeriesService {
                 console.log(`Mortes diminuiram do dia ${acc.date}: ${acc.deaths} para ${value.date}: ${value.deaths}. (IBGE: ${value.city_ibge_code})`);
               newValue.deaths = Math.max(acc.deaths, value.deaths);
               newValue.confirmed = Math.max(acc.confirmed, value.confirmed);
-              newValue.date = value.date;
+              newValue.date = moment(value.date);
               return newValue;
             },
             { deaths: 0, confirmed: 0, date: null, city_ibge_code: null }
