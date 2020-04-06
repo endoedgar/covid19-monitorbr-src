@@ -46,11 +46,11 @@ export class RouteGuard implements CanActivate {
         if(date.isValid())
           this.store.dispatch(SetDate({ date }));
         else {
-          this.store.dispatch(SetDate({ date: moment().utc() }));
+          this.store.dispatch(SetDate({ date: moment() }));
         }
       }
     } else {
-      this.store.dispatch(SetDate({ date: moment().utc() }));
+      this.store.dispatch(SetDate({ date: moment() }));
     }
 
     if(route.params?.mode) {

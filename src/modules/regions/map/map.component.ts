@@ -119,7 +119,7 @@ export class MapComponent
     private router: Router
   ) {
     const firstDay = moment("2020-02-26").utc().startOf("day");
-    const vetSize = moment().utc().diff(firstDay, "days") + 1;
+    const vetSize = moment().diff(firstDay, "days");
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) =>
@@ -158,7 +158,7 @@ export class MapComponent
     this.store.dispatch(GetRegions());
     this.abreAvisoInicial(false);
     this.obterDados();
-    moment.tz.setDefault("UTC");
+    //moment.tz.setDefault("UTC");
     this.mapDiv = this.mapDivRef?.nativeElement;
   }
 
