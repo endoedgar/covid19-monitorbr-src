@@ -118,12 +118,12 @@ export class MapComponent
     private injector: Injector,
     private router: Router
   ) {
-    const firstDay = moment("2020-02-26").utc().startOf("day");
-    const vetSize = moment().utc().diff(firstDay, "days");
+    const firstDay = moment("2020-02-26").startOf("day");
+    const vetSize = moment().diff(firstDay, "days")+1;
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) =>
-        moment(firstDay).utc()
+        moment(firstDay)
           .add(vetSize - 1 - i, "days")
           .startOf("day").format("YYYY-MM-DD")
       );
