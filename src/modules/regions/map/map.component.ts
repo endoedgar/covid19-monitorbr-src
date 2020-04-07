@@ -154,7 +154,6 @@ export class MapComponent
 
   public obterDados() {
     this.store.dispatch(GetTimeSeries());
-    this.store.dispatch(ChangeMode({ mode: MapModeEnum.SELECT_CITY }));
   }
 
   ngOnInit() {
