@@ -21,6 +21,7 @@ export class RegionService {
           sigla: null,
           codigo_uf: city.codigo_uf,
           tipo: RegionTipoEnum.CIDADE,
+          estimated_population: 0,
           representacao: { longitude: city.longitude, latitude: city.latitude }
         };
       })
@@ -41,6 +42,7 @@ export class RegionService {
         representacao: state.geometry.coordinates.map(polygon =>
           polygon.map(lines => lines.map(vec => [vec[1], vec[0]]))
         ),
+        estimated_population: 0,
         confirmed: 0,
         deaths: 0
       }))

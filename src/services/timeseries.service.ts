@@ -81,6 +81,7 @@ export class TimeSeriesService {
                 console.log(`Mortes diminuiram do dia ${acc.date}: ${acc.deaths} para ${value.date}: ${value.deaths}. (IBGE: ${value.city_ibge_code})`);
               newValue.deaths = Math.max(acc.deaths, value.deaths);
               newValue.confirmed = Math.max(acc.confirmed, value.confirmed);
+              newValue.estimated_population = value.estimated_population_2019;
               newValue.date = moment(value.date);
               return newValue;
             },

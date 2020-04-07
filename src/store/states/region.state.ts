@@ -6,7 +6,9 @@ export enum MapModeEnum {
   SELECT_CITY = "SELECT_CITY",
   SELECT_STATE = "SELECT_STATE",
   SELECT_CITY_PER_DAY = "SELECT_CITY_PER_DAY",
-  SELECT_STATE_PER_DAY = "SELECT_STATE_PER_DAY"
+  SELECT_STATE_PER_DAY = "SELECT_STATE_PER_DAY",
+  SELECT_CITY_PER_100K = "SELECT_CITY_PER_100K",
+  SELECT_STATE_PER_100K = "SELECT_STATE_PER_100K"
 };
 
 export const MapModeEnum2LabelMapping: Record<MapModeEnum, string> = {
@@ -14,6 +16,8 @@ export const MapModeEnum2LabelMapping: Record<MapModeEnum, string> = {
   [MapModeEnum.SELECT_STATE]: "map.statetotal",
   [MapModeEnum.SELECT_CITY_PER_DAY]: "map.citydaily",
   [MapModeEnum.SELECT_STATE_PER_DAY]: "map.statedaily",
+  [MapModeEnum.SELECT_CITY_PER_100K]: "map.citytotalper100k",
+  [MapModeEnum.SELECT_STATE_PER_100K]: "map.statetotalper100k"
 };
 
 export interface RegionState extends EntityState<Region> {

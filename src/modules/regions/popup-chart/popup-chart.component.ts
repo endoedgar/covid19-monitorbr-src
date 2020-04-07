@@ -43,7 +43,7 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
     public translate: TranslateService,
     private router: Router
   ) {
-    this.estadosPorCodigo = estados.reduce((prev, current) => ({...prev, [current.codigo_uf]: current}), {});
+    this.estadosPorCodigo = Object.values(estados).reduce((prev, current) => ({...prev, [current.codigo_uf]: current}), {});
   }
 
   ngOnDestroy(): void {
@@ -71,7 +71,10 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
     const dias = validDates.map(timeseries => ({
       x: timeseries.date,
       confirmeddiff: timeseries.confirmeddiff,
-      deathsdiff: timeseries.deathsdiff
+      deathsdiff: timeseries.deathsdiff,
+      confirmed: timeseries.confirmed,
+      deaths: timeseries.deaths,
+      estimated_population: timeseries.estimated_population
     }));
 
     type dia_data = {
@@ -80,6 +83,9 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
       deathsdiff: number;
       confirmedsum: number;
       deathssum: number;
+      deaths: number;
+      confirmed: number;
+      estimated_population: number;
     };
     from(dias)
       .pipe(
@@ -88,30 +94,45 @@ export class PopupChartComponent implements OnInit, AfterViewInit, OnDestroy {
             const dados = {
               x: value.x,
               confirmeddiff: value.confirmeddiff,
-              deathsdiff: value.deathsdiff
+              deathsdiff: value.deathsdiff,
+              deaths: value.deaths,
+              confirmed: value.confirmed,
+              estimated_population: value.estimated_population
             };
 
-            return ![
-              MapModeEnum.SELECT_CITY_PER_DAY,
-              MapModeEnum.SELECT_STATE_PER_DAY
-            ].includes(this.mapMode)
-              ? {
+            switch(this.mapMode) {
+              case MapModeEnum.SELECT_CITY_PER_DAY:
+              case MapModeEnum.SELECT_STATE_PER_DAY:
+                return {
+                  ...dados,
+                  confirmedsum: value.confirmeddiff,
+                  deathssum: value.deathsdiff
+                }
+              case MapModeEnum.SELECT_CITY:
+              case MapModeEnum.SELECT_STATE:
+                return {
                   ...dados,
                   confirmedsum: acc.confirmedsum + value.confirmeddiff,
                   deathssum: acc.deathssum + value.deathsdiff
                 }
-              : {
+              case MapModeEnum.SELECT_CITY_PER_100K:
+              case MapModeEnum.SELECT_STATE_PER_100K:
+                return {
                   ...dados,
-                  confirmedsum: value.confirmeddiff,
-                  deathssum: value.deathsdiff
-                };
+                  confirmedsum: (100000 * (value.confirmed / value.estimated_population)).toFixed(4),
+                  deathssum: (100000 * (value.deaths / value.estimated_population)).toFixed(4)
+                }
+            }
           },
           {
             x: null,
             confirmeddiff: 0,
             deathsdiff: 0,
             confirmedsum: 0,
-            deathssum: 0
+            deathssum: 0,
+            deaths: 0,
+            confirmed: 0,
+            estimated_population: 0
           }
         ),
         toArray()

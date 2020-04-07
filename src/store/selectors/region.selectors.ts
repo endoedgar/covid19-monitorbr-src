@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from "@ngrx/store";
 import {
   regionAdapter,
   RegionState,
-  MapModeEnum
+  MapModeEnum,
 } from "../states/region.state";
 
 import { selectAllTimeSeries$ } from "./timeseries.selectors";
@@ -13,7 +13,7 @@ import moment from "moment-timezone";
 
 export const {
   selectAll: _selectAllRegions,
-  selectEntities: _selectRegionsEntities
+  selectEntities: _selectRegionsEntities,
 } = regionAdapter.getSelectors();
 
 export const selectRegionState$ = createFeatureSelector<RegionState>("regions");
@@ -35,36 +35,39 @@ export const getCurrentRegionId$ = createSelector(
 export const getCurrentRegion$ = createSelector(
   selectRegionState$,
   getCurrentRegionId$,
-  state => state.entities[state.selectedRegionId]
+  (state) => state.entities[state.selectedRegionId]
 );
 
 export const selectRegionsLoading$ = createSelector(
   selectRegionState$,
-  state => state.loading
+  (state) => state.loading
 );
 
 export const selectRegionsMapMode$ = createSelector(
   selectRegionState$,
-  state => state.mapMode
+  (state) => state.mapMode
 );
 
 export const selectRegionsDate$ = createSelector(
   selectRegionState$,
-  state => state.date
+  (state) => state.date
 );
 
 export const selectMapRegion$ = createSelector(
   selectRegionState$,
-  state => state.mapRegion
+  (state) => state.mapRegion
 );
 
 export const selectSelectedMapRegion$ = createSelector(
   selectRegionState$,
   selectAllRegions$,
-  (state,regions) => state.mapRegion != null ? regions.find(r => r.sigla == state.mapRegion) : undefined
+  (state, regions) =>
+    state.mapRegion != null
+      ? regions.find((r) => r.sigla == state.mapRegion)
+      : undefined
 );
 
-export const getRegionsWithLatestCases$ = store =>
+export const getRegionsWithLatestCases$ = (store) =>
   combineLatest(
     store.select(selectAllRegionsEntities$),
     store.select(selectAllTimeSeries$),
@@ -79,20 +82,29 @@ export const getRegionsWithLatestCases$ = store =>
       selectedMapRegion: Region
     ) => {
       const returnedRegions = {};
-      allTimeSeries.forEach(timeseries => {
+      allTimeSeries.forEach((timeseries) => {
         const region = regions[timeseries.city_ibge_code];
-        if(selectedMapRegion != null && (region?.codigo_uf != selectedMapRegion?.codigo_ibge && region?.codigo_ibge != selectedMapRegion.codigo_ibge))
+        if (
+          selectedMapRegion != null &&
+          region?.codigo_uf != selectedMapRegion?.codigo_ibge &&
+          region?.codigo_ibge != selectedMapRegion.codigo_ibge
+        )
           return;
-        if (typeof region != "undefined" && timeseries.date.isSameOrBefore(date, 'day')) {
+        if (
+          typeof region != "undefined" &&
+          timeseries.date.isSameOrBefore(date, "day")
+        ) {
           if (
             ([
               MapModeEnum.SELECT_CITY,
-              MapModeEnum.SELECT_CITY_PER_DAY
+              MapModeEnum.SELECT_CITY_PER_DAY,
+              MapModeEnum.SELECT_CITY_PER_100K,
             ].includes(currentMode) &&
               region.tipo == RegionTipoEnum.CIDADE) ||
             ([
               MapModeEnum.SELECT_STATE,
-              MapModeEnum.SELECT_STATE_PER_DAY
+              MapModeEnum.SELECT_STATE_PER_DAY,
+              MapModeEnum.SELECT_STATE_PER_100K,
             ].includes(currentMode) &&
               region.tipo == RegionTipoEnum.ESTADO)
           ) {
@@ -101,20 +113,33 @@ export const getRegionsWithLatestCases$ = store =>
             )
               returnedRegions[timeseries.city_ibge_code] = {
                 ...region,
-                timeseries: []
+                timeseries: [],
               };
             const rRegion = returnedRegions[timeseries.city_ibge_code];
+            rRegion.estimated_population = timeseries.estimated_population;
 
-            if (
-              [MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(
-                currentMode
-              )
-            ) {
-              rRegion.confirmed += timeseries.confirmeddiff;
-              rRegion.deaths += timeseries.deathsdiff;
-            } else {
-              rRegion.confirmed = timeseries.confirmeddiff;
-              rRegion.deaths = timeseries.deathsdiff;
+            switch (currentMode) {
+              case MapModeEnum.SELECT_CITY:
+              case MapModeEnum.SELECT_STATE:
+                rRegion.confirmed += timeseries.confirmeddiff;
+                rRegion.deaths += timeseries.deathsdiff;
+                break;
+              case MapModeEnum.SELECT_CITY_PER_DAY:
+              case MapModeEnum.SELECT_STATE_PER_DAY:
+                rRegion.confirmed = timeseries.confirmeddiff;
+                rRegion.deaths = timeseries.deathsdiff;
+                break;
+              case MapModeEnum.SELECT_CITY_PER_100K:
+              case MapModeEnum.SELECT_STATE_PER_100K:
+                rRegion.confirmed =
+                  Math.round((100000 *
+                  (timeseries.confirmed / rRegion.estimated_population))*10000)/10000;
+                  rRegion.deaths =
+                  Math.round((100000 *
+                  (timeseries.deaths / rRegion.estimated_population))*10000)/10000;
+                break;
+              default:
+                rRegion.confirmed = rRegion.deaths = 0;
             }
             rRegion.timeseries.push(timeseries);
           }
@@ -124,7 +149,7 @@ export const getRegionsWithLatestCases$ = store =>
     }
   );
 
-export const getRegionWithLatestCases$ = store =>
+export const getRegionWithLatestCases$ = (store) =>
   combineLatest(
     store.select(getCurrentRegion$),
     store.select(selectAllTimeSeries$),
@@ -136,26 +161,39 @@ export const getRegionWithLatestCases$ = store =>
       currentMode: MapModeEnum,
       date: moment.Moment
     ) => {
-      if(!region)
-        return {}
+      if (!region) return {};
       let returnedRegion = {
         ...region,
-        timeseries: []
+        timeseries: [],
       };
       allTimeSeries
-        .filter(timeSeries => timeSeries.city_ibge_code == region.codigo_ibge)
-        .forEach(timeseries => {
-          if (timeseries.date.isSameOrBefore(date,'day')) {
-            if (
-              [MapModeEnum.SELECT_CITY, MapModeEnum.SELECT_STATE].includes(
-                currentMode
-              )
-            ) {
-              returnedRegion.confirmed += timeseries.confirmeddiff;
-              returnedRegion.deaths += timeseries.deathsdiff;
-            } else {
-              returnedRegion.confirmed = timeseries.confirmeddiff;
-              returnedRegion.deaths = timeseries.deathsdiff;
+        .filter((timeSeries) => timeSeries.city_ibge_code == region.codigo_ibge)
+        .forEach((timeseries) => {
+          if (timeseries.date.isSameOrBefore(date, "day")) {
+            returnedRegion.estimated_population =
+              timeseries.estimated_population;
+            switch (currentMode) {
+              case MapModeEnum.SELECT_CITY:
+              case MapModeEnum.SELECT_STATE:
+                returnedRegion.confirmed += timeseries.confirmeddiff;
+                returnedRegion.deaths += timeseries.deathsdiff;
+                break;
+              case MapModeEnum.SELECT_CITY_PER_DAY:
+              case MapModeEnum.SELECT_STATE_PER_DAY:
+                returnedRegion.confirmed = timeseries.confirmeddiff;
+                returnedRegion.deaths = timeseries.deathsdiff;
+                break;
+              case MapModeEnum.SELECT_CITY_PER_100K:
+              case MapModeEnum.SELECT_STATE_PER_100K:
+                returnedRegion.confirmed =
+                  Math.round((100000 *
+                  (timeseries.confirmed / returnedRegion.estimated_population))*10000)/10000;
+                returnedRegion.deaths =
+                  Math.round((100000 *
+                  (timeseries.deaths / returnedRegion.estimated_population))*10000)/10000;
+                break;
+              default:
+                returnedRegion.confirmed = returnedRegion.deaths = 0;
             }
             returnedRegion.timeseries.push(timeseries);
           }

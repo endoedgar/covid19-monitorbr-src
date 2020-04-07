@@ -33,7 +33,7 @@ export class PopupStateListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.estados = [...estados]
+    this.estados = Object.values(estados).filter(e => e.uf != "BR")
     this.estados = this.estados.sort((a, b) => (a.nome > b.nome ? 1 : -1));
     this.estados.unshift({ uf: "BR", nome: this.translate.instant("map.brazil"), codigo_uf: 0 });
 

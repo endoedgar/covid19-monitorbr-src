@@ -17,4 +17,6 @@ export interface Region {
 
     confirmed:number;
     deaths:number;
+
+    estimated_population: number;
 }

@@ -8,12 +8,12 @@ import {
   ElementRef,
   ComponentFactoryResolver,
   Injector,
-  ComponentRef
+  ComponentRef,
 } from "@angular/core";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
 import { Observable, Subscription } from "rxjs";
-import { Region } from "src/models/Region";
+import { Region, RegionTipoEnum } from "src/models/Region";
 import { AppState } from "src/store/states/app.state";
 import { Store } from "@ngrx/store";
 import {
@@ -21,32 +21,34 @@ import {
   getCurrentRegion$,
   selectRegionsMapMode$,
   selectRegionsDate$,
-  selectSelectedMapRegion$
+  selectSelectedMapRegion$,
 } from "src/store/selectors/region.selectors";
 import {
   GetRegions,
   SelectRegion,
   ChangeMode,
   DeselectRegion,
-  SetDate
+  SetDate,
 } from "src/store/actions/region.actions";
 import { GetTimeSeries } from "src/store/actions/timeseries.actions";
 import { MatSidenav } from "@angular/material/sidenav";
 import {
   MapModeEnum,
-  MapModeEnum2LabelMapping
+  MapModeEnum2LabelMapping,
 } from "src/store/states/region.state";
 import moment from "moment-timezone";
 import { MatDialogConfig, MatDialog } from "@angular/material/dialog";
 import { AvisoInicialComponent } from "../aviso-inicial/aviso-inicial.component";
 import {
   selectTimeSeriesLoading$,
-  selectTimeSeriesUltimaAtualizacao$
+  selectTimeSeriesUltimaAtualizacao$,
 } from "src/store/selectors/timeseries.selectors";
 import { TranslateService } from "@ngx-translate/core";
 import { PopupChartComponent } from "../popup-chart/popup-chart.component";
-import { Router } from '@angular/router';
-import { PopupStateListComponent } from '../popup-state-list/popup-state-list.component';
+import { Router } from "@angular/router";
+import { PopupStateListComponent } from "../popup-state-list/popup-state-list.component";
+import { TimeSeries } from "src/models/TimeSeries";
+import estados from "src/assets/data/estados.json";
 //import { ActivatedRoute } from "@angular/router";
 
 // função que colore as bolinhas e estados
@@ -73,7 +75,7 @@ function getColor(d) {
 @Component({
   selector: "app-map",
   templateUrl: "./map.component.html",
-  styleUrls: ["./map.component.scss"]
+  styleUrls: ["./map.component.scss"],
 })
 export class MapComponent
   implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
@@ -87,7 +89,7 @@ export class MapComponent
   public getSelectedMapRegion$ = this.store.select(selectSelectedMapRegion$);
   public mapMode: MapModeEnum;
 
-  @ViewChild('map', {static: true}) 
+  @ViewChild("map", { static: true })
   protected mapDivRef: ElementRef;
   protected mapDiv: HTMLDivElement;
   private map: L.Map;
@@ -98,8 +100,8 @@ export class MapComponent
   public options = [];
   public moment = moment;
 
-  public totalConfirmed: number;
-  public totalDeath: number;
+  public totalConfirmed: string;
+  public totalDeath: string;
   public modesMapped = MapModeEnum2LabelMapping;
   public availableDates = [];
   public mapDate: moment.Moment;
@@ -119,21 +121,22 @@ export class MapComponent
     private router: Router
   ) {
     const firstDay = moment("2020-02-26").startOf("day");
-    const vetSize = moment().diff(firstDay, "days")+1;
+    const vetSize = moment().diff(firstDay, "days") + 1;
     this.availableDates = Array(vetSize)
       .fill(0)
       .map((x, i) =>
         moment(firstDay)
           .add(vetSize - 1 - i, "days")
-          .startOf("day").format("YYYY-MM-DD")
+          .startOf("day")
+          .format("YYYY-MM-DD")
       );
     this.store.dispatch(SetDate({ date: this.availableDates[0] }));
   }
   ngOnDestroy(): void {
-    this.subscriptions$.forEach($s => $s.unsubscribe());
+    this.subscriptions$.forEach(($s) => $s.unsubscribe());
     this.subscriptions$ = null;
     if (this.map) {
-      this.markersRegioes.forEach(m => m.remove());
+      this.markersRegioes.forEach((m) => m.remove());
       this.map.off();
       this.map.remove();
       this.map = null;
@@ -162,28 +165,29 @@ export class MapComponent
     this.mapDiv = this.mapDivRef?.nativeElement;
   }
 
-  getDate(date : Date) : string {
-    if(!date)
-      date = this.mapDate;
-    const format = 'YYYY-MM-DD'
+  getDate(date: Date): string {
+    if (!date) date = this.mapDate;
+    const format = "YYYY-MM-DD";
     const dateSelected = moment(date).format(format);
     const lastDay = moment(this.availableDates[0]).format(format);
-    if(dateSelected == lastDay)
-      return 'last';
-    else
-      return dateSelected;
+    if (dateSelected == lastDay) return "last";
+    else return dateSelected;
   }
 
   mudancaDeModo(event) {
-    const regiao : string = this.selectedMapRegion ? this.selectedMapRegion.sigla : 'BR';
-    const url = [regiao, event.value, this.getDate(null)].join('/');
+    const regiao: string = this.selectedMapRegion
+      ? this.selectedMapRegion.sigla
+      : "BR";
+    const url = [regiao, event.value, this.getDate(null)].join("/");
     this.router.navigateByUrl(url);
     //this.store.dispatch(ChangeMode({ mode: event.value }));
   }
 
   mudancaDeData(event) {
-    const regiao : string = this.selectedMapRegion ? this.selectedMapRegion.sigla : 'BR';
-    const url = [regiao, this.mapMode, this.getDate(event.value)].join('/');
+    const regiao: string = this.selectedMapRegion
+      ? this.selectedMapRegion.sigla
+      : "BR";
+    const url = [regiao, this.mapMode, this.getDate(event.value)].join("/");
     this.router.navigateByUrl(url);
 
     //this.store.dispatch(SetDate({ date: event.value }));
@@ -192,7 +196,7 @@ export class MapComponent
   private addLegenda() {
     const legend = new L.Control({ position: "bottomright" });
 
-    legend.onAdd = function(map) {
+    legend.onAdd = function (map) {
       const div = L.DomUtil.create("div", "info legend"),
         grades = [0, 10, 20, 50, 100, 200, 500, 1000],
         labels = [];
@@ -212,7 +216,7 @@ export class MapComponent
     legend.addTo(this.map);
   }
 
-  private setGeoJSONFronteira(geoJSONFronteira : L.GeoJSON) {
+  private setGeoJSONFronteira(geoJSONFronteira: L.GeoJSON) {
     if (this.geoJSONFronteira) {
       this.geoJSONFronteira.remove();
       this.geoJSONFronteira = null;
@@ -220,7 +224,7 @@ export class MapComponent
 
     this.geoJSONFronteira = geoJSONFronteira;
 
-    if(this.geoJSONFronteira) {
+    if (this.geoJSONFronteira) {
       this.geoJSONFronteira.addTo(this.map).bringToBack();
       this.map.fitBounds(this.geoJSONFronteira.getBounds());
     }
@@ -231,7 +235,6 @@ export class MapComponent
       this.map = L.map("map", {
         center: [-13.5748266, -49.6352299],
         zoom: 4,
-
       });
 
       const tiles = L.tileLayer(
@@ -239,7 +242,7 @@ export class MapComponent
         {
           maxZoom: 19,
           attribution:
-            '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }
       );
 
@@ -250,42 +253,47 @@ export class MapComponent
     this.getSelectedMapRegion$.subscribe((region: any) => {
       this.selectedMapRegion = region;
       if (region?.sigla != null) {
-        this.getJSON("assets/data/brazil-states.geojson").subscribe(brasil => {
-          this.setGeoJSONFronteira(L.geoJSON(brasil, {
-            style: function(feature) {
-              const a = feature.properties && feature.properties.style;
-              return { ...a, weight: 1, fillOpacity: 0 };
-            },
-            filter: feature => feature.properties.sigla == region.sigla
-          }));
-        });
+        this.getJSON("assets/data/brazil-states.geojson").subscribe(
+          (brasil) => {
+            this.setGeoJSONFronteira(
+              L.geoJSON(brasil, {
+                style: function (feature) {
+                  const a = feature.properties && feature.properties.style;
+                  return { ...a, weight: 1, fillOpacity: 0 };
+                },
+                filter: (feature) => feature.properties.sigla == region.sigla,
+              })
+            );
+          }
+        );
       } else {
         // desenhar fronteiras do brasil
-        this.getJSON("assets/data/brazil.json").subscribe(brasil => {
-          this.setGeoJSONFronteira(L.geoJSON(brasil, {
-            style: function(feature) {
-              const a = feature.properties && feature.properties.style;
-              return { ...a, weight: 1, fillOpacity: 0 };
-            }
-          }));
+        this.getJSON("assets/data/brazil.json").subscribe((brasil) => {
+          this.setGeoJSONFronteira(
+            L.geoJSON(brasil, {
+              style: function (feature) {
+                const a = feature.properties && feature.properties.style;
+                return { ...a, weight: 1, fillOpacity: 0 };
+              },
+            })
+          );
         });
       }
     });
   }
 
   ngAfterContentInit(): void {
-    setTimeout(_ => {
+    setTimeout((_) => {
       this.subscriptions$ = [
-        this.store.select(selectRegionsMapMode$).subscribe(mapMode => {
+        this.store.select(selectRegionsMapMode$).subscribe((mapMode) => {
           this.mapMode = mapMode;
         }),
-        this.ultimaAtualizacao$.subscribe(ultimaAtualizacao => {
-          this.ultimaAtualizacao =
-            moment.isMoment(ultimaAtualizacao)
-              ? moment(ultimaAtualizacao).local().format("LL")
-              : "...";
+        this.ultimaAtualizacao$.subscribe((ultimaAtualizacao) => {
+          this.ultimaAtualizacao = moment.isMoment(ultimaAtualizacao)
+            ? moment(ultimaAtualizacao).local().format("LL")
+            : "...";
         }),
-        this.mapDate$.subscribe(mapDate => {
+        this.mapDate$.subscribe((mapDate) => {
           this.mapDate = moment(mapDate).format("YYYY-MM-DD");
         }),
 
@@ -296,14 +304,14 @@ export class MapComponent
           }
         ),
 
-        this.store.select(getCurrentRegion$).subscribe(region => {
+        this.store.select(getCurrentRegion$).subscribe((region) => {
           if (region != null) {
             const marker = this.markersRegioes[region?.codigo_ibge];
             if (marker != null) {
               this.mostraPopup(marker);
             }
           }
-        })
+        }),
       ];
 
       // Correção para exibir no browser android
@@ -347,14 +355,14 @@ export class MapComponent
         weight: 0,
         radius: Math.max(5, 50.0 * razao),
         fillOpacity: 0.9,
-        className: "pulse"
+        className: "pulse",
       };
 
       if (!circle) {
         marker = L.circleMarker(
           [
             regiaoAtual.representacao.latitude,
-            regiaoAtual.representacao.longitude
+            regiaoAtual.representacao.longitude,
           ],
           estilo
         );
@@ -369,7 +377,7 @@ export class MapComponent
         color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
         fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
         weight: 3,
-        fillOpacity: 0.9
+        fillOpacity: 0.9,
       };
 
       if (!polygon) {
@@ -410,16 +418,14 @@ export class MapComponent
   }
 
   private limparMarkers() {
-    this.markersRegioes?.forEach(marker => this.map.removeLayer(marker));
+    this.markersRegioes?.forEach((marker) => this.map.removeLayer(marker));
   }
 
-  private criarMarker(regiaoAtual): L.Path {
+  private criarMarker(regiaoAtual: Region): L.Path {
     if (typeof regiaoAtual != "undefined") {
-      this.totalConfirmed += regiaoAtual.confirmed;
-      this.totalDeath += regiaoAtual.deaths;
       const razao = regiaoAtual.confirmed / this.maiorCaso;
 
-      const bringMarkerToFront = marker => {
+      const bringMarkerToFront = (marker) => {
         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
           marker.bringToFront();
         }
@@ -431,20 +437,20 @@ export class MapComponent
           mouseout: ({ target: marker }) => {
             marker.setStyle({
               color: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
-              fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths)
+              fillColor: getColor(regiaoAtual.confirmed + regiaoAtual.deaths),
             });
             bringMarkerToFront(marker);
           },
           mouseover: ({ target: marker }) => {
             marker.setStyle({
-              fillColor: "#777"
+              fillColor: "#777",
             });
             bringMarkerToFront(marker);
           },
-          click: _ => {
+          click: (_) => {
             this.store.dispatch(DeselectRegion());
             this.store.dispatch(SelectRegion({ region: { ...regiaoAtual } }));
-          }
+          },
         });
     }
   }
@@ -452,15 +458,83 @@ export class MapComponent
   maiorCaso;
 
   private calculaMaiorCaso() {
-    this.maiorCaso = Object.keys(this.regioes).reduce(
-      (prev, curr) =>
-        prev < this.regioes[curr].confirmed
-          ? this.regioes[curr].confirmed
-          : prev,
-      0
-    );
+    let dados: {
+      maiorCaso: number;
+      totalDeath: number;
+      totalConfirmed: number;
+      totalDeathAbs: number;
+      totalConfirmedAbs: number;
+    };
+    dados = Object.keys(this.regioes)
+      .map((curr) => this.regioes[curr])
+      .filter(
+        (region: Region) =>
+          (region.tipo == RegionTipoEnum.CIDADE &&
+            [
+              MapModeEnum.SELECT_CITY,
+              MapModeEnum.SELECT_CITY_PER_100K,
+              MapModeEnum.SELECT_CITY_PER_DAY,
+            ].includes(this.mapMode)) ||
+          (region.tipo == RegionTipoEnum.ESTADO &&
+            [
+              MapModeEnum.SELECT_STATE,
+              MapModeEnum.SELECT_STATE_PER_100K,
+              MapModeEnum.SELECT_STATE_PER_DAY,
+            ].includes(this.mapMode))
+      )
+      .reduce(
+        (prev, regiaoAtual: Region & { timeseries: TimeSeries[] }) => {
+          let retorno = { ...prev };
+          retorno.maiorCaso =
+            prev.maiorCaso < regiaoAtual.confirmed
+              ? regiaoAtual.confirmed
+              : prev.maiorCaso;
+          retorno.totalDeath = prev.totalDeath + regiaoAtual.deaths;
+          retorno.totalConfirmed = prev.totalConfirmed + regiaoAtual.confirmed;
+          retorno.totalDeathAbs =
+            prev.totalDeathAbs +
+            regiaoAtual.timeseries[regiaoAtual.timeseries.length - 1].deaths;
+          retorno.totalConfirmedAbs =
+            prev.totalConfirmedAbs +
+            regiaoAtual.timeseries[regiaoAtual.timeseries.length - 1].confirmed;
+          return retorno;
+        },
+        {
+          maiorCaso: 0,
+          totalDeath: 0,
+          totalConfirmed: 0,
+          totalDeathAbs: 0,
+          totalConfirmedAbs: 0,
+        }
+      );
 
-    this.totalDeath = this.totalConfirmed = 0;
+    this.maiorCaso = dados.maiorCaso;
+
+    this.totalDeath = dados.totalDeath.toString();
+    this.totalConfirmed = dados.totalConfirmed.toString();
+
+    if (
+      [
+        MapModeEnum.SELECT_STATE_PER_100K,
+        MapModeEnum.SELECT_CITY_PER_100K,
+      ].includes(this.mapMode)
+    ) {
+      const totalPopulation =
+        estados[
+          this.selectedMapRegion != null ? this.selectedMapRegion.sigla : "BR"
+        ].populacao;
+      console.log(dados.totalDeathAbs);
+      console.log(totalPopulation);
+
+      this.totalDeath = (
+        100000 *
+        (dados.totalDeathAbs / totalPopulation)
+      ).toFixed(4).toString();
+      this.totalConfirmed = (
+        100000 *
+        (dados.totalConfirmedAbs / totalPopulation)
+      ).toFixed(4).toString();
+    }
   }
 
   private initMap() {
@@ -469,8 +543,10 @@ export class MapComponent
 
     this.calculaMaiorCaso();
 
-    Object.keys(this.regioes).forEach(regiao_ibge => {
-      const regiao = this.regioes[regiao_ibge];
+    Object.keys(this.regioes).forEach((regiao_ibge) => {
+      const regiao: Region & { timeseries: TimeSeries[] } = this.regioes[
+        regiao_ibge
+      ];
       let markerAtual = this.markersRegioes[regiao_ibge];
 
       if (!markerAtual) {
@@ -488,7 +564,7 @@ export class MapComponent
             regionName: regiao.nome,
             regionConfirmed: regiao.confirmed,
             regionDeaths: regiao.deaths,
-            lastUpdate: moment(ultimoCaso?.date).local().format("LL")
+            lastUpdate: moment(ultimoCaso?.date).local().format("LL"),
           })
         );
       }
