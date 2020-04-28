@@ -234,6 +234,7 @@ export class MapComponent
       this.map = L.map("map", {
         center: [-13.5748266, -49.6352299],
         zoom: 4,
+        preferCanvas: true
       });
 
       const tiles = L.tileLayer(
